@@ -122,8 +122,6 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
 
   @Override
   public void onCreate() {
-    Log.d(TAG, "125 onCreate() executed!");
-
     super.onCreate();
 
     backgroundContext = getApplicationContext();
@@ -154,14 +152,11 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
       }
     }
 
-    Log.d(TAG, "157 (!isIsolateRunning.get()) es: " + (!isIsolateRunning.get()));
     // If background isolate is not running start it.
     if (!isIsolateRunning.get()) {
-      Log.d(TAG, "160 isIsolateRunning no se esta ejecutando!!!");
-
       SharedPreferences p = backgroundContext.getSharedPreferences(SHARED_PREFERENCES_KEY, 0);
       long callbackHandle = p.getLong(BACKGROUND_SETUP_CALLBACK_HANDLE_KEY, 0);
-      Log.d(TAG, "164 callbackHandle es: " + (callbackHandle));
+      
       startBackgroundIsolate(backgroundContext, callbackHandle);
     }
   }
@@ -173,7 +168,6 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    */
   @Override
   public void onMessageReceived(final RemoteMessage remoteMessage) {
-    Log.d(TAG, "176 onMessageReceived() executed!");
     // If application is running in the foreground use local broadcast to handle message.
     // Otherwise use the background isolate to handle message.
     if (isApplicationForeground(this)) {
@@ -214,12 +208,9 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    */
   @Override
   public void onNewToken(String token) {
-    Log.d(TAG, "217 onNewToken() executed! " + token);
-
     Intent intent = new Intent(ACTION_TOKEN);
     intent.putExtra(EXTRA_TOKEN, token);
     LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    Log.d("222 FIREBASE", "LocalBroadcastManager.getInstance(this).sendBroadcast(intent) enviado a donde???");
   }
 
   /**
@@ -232,20 +223,11 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    *     handling on the dart side.
    */
   public static void startBackgroundIsolate(Context context, long callbackHandle) {
-    Log.d(TAG, "235 startBackgroundIsolate() executed!");
-
     FlutterMain.ensureInitializationComplete(context, null);
     String appBundlePath = FlutterMain.findAppBundlePath(context);
-    Log.d(TAG, "239 appBundlePath es: " + appBundlePath);
-    Log.d(TAG, "240 callbackHandle es: " + callbackHandle);
-    Log.d(TAG, "241 context.getApplicationContext() es: " + context.getApplicationContext());
-    Log.d(TAG, "242 context.getApplicationContext().getApplicationInfo() es: " + context.getApplicationContext().getApplicationInfo());
     FlutterCallbackInformation flutterCallback = FlutterCallbackInformation.lookupCallbackInformation(callbackHandle);
-
-    Log.d(TAG, "245 flutterCallback == null es: " + (flutterCallback == null));
+    
     if (flutterCallback == null) {
-      Log.d(TAG, "247 flutterCallback es null return :(");
-
       Log.e(TAG, "Fatal: failed to find callback");
       return;
     }
@@ -264,8 +246,6 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
       args.libraryPath = flutterCallback.callbackLibraryPath;
       backgroundFlutterView.runFromBundle(args);
       pluginRegistrantCallback.registerWith(backgroundFlutterView.getPluginRegistry());
-
-      Log.d(TAG, "268 startBackgroundIsolate() completed!");
     }
   }
 
@@ -274,19 +254,15 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    * Dart side once all background initialization is complete via `FcmDartService#initialized`.
    */
   public static void onInitialized() {
-    Log.e(TAG, "277 onInitialized() executed!");
     isIsolateRunning.set(true);
     synchronized (backgroundMessageQueue) {
       // Handle all the messages received before the Dart isolate was
       // initialized, then clear the queue.
-      Log.e(TAG, "282 Manejando los mensajes agregados a cola :)");
       Iterator<RemoteMessage> i = backgroundMessageQueue.iterator();
       while (i.hasNext()) {
-        Log.e(TAG, "285 while (i.hasNext()) looping");
         executeDartCallbackInBackgroundIsolate(backgroundContext, i.next(), null);
       }
       backgroundMessageQueue.clear();
-      Log.e(TAG, "289 backgroundMessageQueue limpiado");
     }
   }
 
@@ -297,8 +273,6 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    * @param channel Background method channel.
    */
   public static void setBackgroundChannel(MethodChannel channel) {
-    Log.d(TAG, "300 setBackgroundChannel() executed!");
-
     backgroundChannel = channel;
   }
 
@@ -310,13 +284,11 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
     prefs.edit().putInt(SETUP_ACTIVITY_IC_LAUNCHER_HANDLE_KEY, icLauncherId).apply();
     prefs.edit().putInt(SETUP_ACTIVITY_VIEW_COLLAPSE_HANDLE_KEY, viewCollapseNotify).apply();
     prefs.edit().putInt(SETUP_ACTIVITY_TIMESTAMP_HANDLE_KEY, timeStamp).apply();
-
-    Log.d(TAG, "314 registrar variable obtenida desde plugin");
   }
 
   public static void getPluginRegistryRegistrar() {
-    Log.d(TAG, "318 getPluginRegistryRegistrar()");
-    Log.d(TAG, "319 classNameActivity  es: " + classNameActivity);
+    Log.e(TAG, "getPluginRegistryRegistrar()");
+    Log.e(TAG, "classNameActivity  es: " + classNameActivity);
   }
 
   /**
@@ -328,7 +300,6 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    * @param handle Handle representing the Dart side method that will handle background messages.
    */
   public static void setBackgroundMessageHandle(Context context, Long handle) {
-    Log.d(TAG, "331 setBackgroundMessageHandle() executed!");
     backgroundMessageHandle = handle;
 
     // Store background message handle in shared preferences so it can be retrieved
@@ -348,8 +319,6 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    *     background method channel.
    */
   public static void setBackgroundSetupHandle(Context context, long setupBackgroundHandle) {
-    Log.d(TAG, "351 setBackgroundSetupHandle() executed!");
-    Log.d(TAG, "352 setupBackgroundHandle es: " + setupBackgroundHandle);
     // Store background setup handle in shared preferences so it can be retrieved
     // by other application instances.
     SharedPreferences prefs = context.getSharedPreferences(SHARED_PREFERENCES_KEY, 0);
@@ -367,8 +336,6 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    * @return Dart side background message handle.
    */
   public static Long getBackgroundMessageHandle(Context context) {
-    Log.d(TAG, "370 getBackgroundMessageHandle() executed!");
-
     return context
         .getSharedPreferences(SHARED_PREFERENCES_KEY, 0)
         .getLong(BACKGROUND_MESSAGE_CALLBACK_HANDLE_KEY, 0);
@@ -386,10 +353,6 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    *     any waiting threads to continue.
    */
   private static void executeDartCallbackInBackgroundIsolate(Context context, RemoteMessage remoteMessage, final CountDownLatch latch) {
-    Log.d(TAG, "389 executeDartCallbackInBackgroundIsolate() executed!");
-    Log.d(TAG, "390 a new background message is received or after background method channel setup for queued messages received during setup.");
-
-    Log.d(TAG, "392 backgroundChannel es: " + backgroundChannel);
     if (backgroundChannel == null) {
       throw new RuntimeException(
           "setBackgroundChannel was not called before messages came in, exiting.");
@@ -416,10 +379,8 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     args.put("message", messageData);
-
-    Log.d(TAG, "420 FirebaseMessagingPlugin ->  channel.invokeMethod(handleBackgroundMessage) Invocando");
+    
     backgroundChannel.invokeMethod("handleBackgroundMessage", args, result);
-    Log.d(TAG, "422 FirebaseMessagingPlugin ->  channel.invokeMethod(handleBackgroundMessage) Invocando");
   }
 
   /**
@@ -429,8 +390,6 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    * @param callback Application class which implements PluginRegistrantCallback.
    */
   public static void setPluginRegistrant(PluginRegistry.PluginRegistrantCallback callback) {
-    Log.d(TAG, "432 FirebaseMessagingPlugin ->  setPluginRegistrant(PluginRegistry.PluginRegistrantCallback callback) executed!");
-    Log.d(TAG, "433 FirebaseMessagingPlugin ->  callback es: " + callback);
     pluginRegistrantCallback = callback;
   }
 
@@ -445,97 +404,45 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    */
   // TODO(kroikie): Find a better way to determine application state.
   private static boolean isApplicationForeground(Context context) {
-    Log.d(TAG, "448 isApplicationForeground(context) es: " + context.toString());
     KeyguardManager keyguardManager =
         (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
 
-    Log.d(TAG, "452 keyguardManager es: " + keyguardManager.toString());
-
-    Log.d(TAG, "454 keyguardManager.inKeyguardRestrictedInputMode() es: " + keyguardManager.inKeyguardRestrictedInputMode());
-
     if (keyguardManager.inKeyguardRestrictedInputMode()) {
-      Log.d(TAG, "457 keyguardManager.inKeyguardRestrictedInputMode() es true -> retornando :( ");
       return false;
     }
     int myPid = Process.myPid();
-    Log.d(TAG, "461 myPid es: " + myPid);
 
     ActivityManager activityManager =
         (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
 
     List<ActivityManager.RunningAppProcessInfo> list;
-
-    Log.d(TAG, "468 activityManager es: " + activityManager.toString());
-
-    Log.d(TAG, "470 activityManager.getRunningAppProcesses()) != null es: " + (((activityManager.getRunningAppProcesses()) != null)));
+    
     if ((list = activityManager.getRunningAppProcesses()) != null) {
-      Log.d(TAG, "472 Inicio For pid process");
       for (ActivityManager.RunningAppProcessInfo aList : list) {
         ActivityManager.RunningAppProcessInfo info;
-        Log.d(TAG, "475 myPid es: " + myPid);
-        Log.d(TAG, "476 aList.pid es: " + aList.pid);
-        Log.d(TAG, "477 ((info = aList).pid == myPid) es: " + ((aList.pid == myPid)));
+        
         if ((info = aList).pid == myPid) {
-          Log.d(TAG, "479 myPid es igual de aList.pid: comparando running process");
-
-          Log.d(TAG, "481 aList es: " + aList);
-          Log.d(TAG, "482 info es: " + info);
-
-          Log.d(TAG, "484 aList.importance es: " + aList.importance);
-          Log.d(TAG, "485 info.importance es: " + info.importance);
-
-          Log.d(TAG, "487 ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND es: " + ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
-          Log.d(TAG, "488 ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED es: " + ActivityManager.RunningAppProcessInfo.IMPORTANCE_BACKGROUND);
-          Log.d(TAG, "489 ActivityManager.RunningAppProcessInfo.IMPORTANCE_EMPTY es: " + ActivityManager.RunningAppProcessInfo.IMPORTANCE_EMPTY);
-          Log.d(TAG, "490 ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE es: " + ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE);
-          Log.d(TAG, "491 ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE es: " + ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE);
-
           return info.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
         }
-        Log.d(TAG, "495 myPid es diferente de aList.pid: continuando iteracion");
       }
     }
-
-    Log.d(TAG, "499   activityManager.getRunningAppProcesses()) es null -> retornando :( ");
+    
     return false;
   }
 
   // TODO(jh0n4): Improve implementation
   private void sendNotification(RemoteMessage remoteMessage, Context context) {
-    Log.d(TAG, "505 sendNotification() executed!");
-
-    Log.d(TAG, "507 remoteMessage.getCollapseKey() es: " + remoteMessage.getCollapseKey());
-    Log.d(TAG, "508 remoteMessage.getFrom() es: " + remoteMessage.getFrom());
-    Log.d(TAG, "509 remoteMessage.getMessageId() es: " + remoteMessage.getMessageId());
-    Log.d(TAG, "510 remoteMessage.getMessageType() es: " + remoteMessage.getMessageType());
-    Log.d(TAG, "511 remoteMessage.getTo() es: " + remoteMessage.getTo());
-    Log.d(TAG, "512 remoteMessage.getOriginalPriority() es: " + remoteMessage.getOriginalPriority());
-    Log.d(TAG, "513 remoteMessage.getPriority() es: " + remoteMessage.getPriority());
-    Log.d(TAG, "514 remoteMessage.getSentTime() es: " + remoteMessage.getSentTime());
-    Log.d(TAG, "515 remoteMessage.getTtl() es: " + remoteMessage.getTtl());
-    Log.d(TAG, "516 remoteMessage.getClass().toString() es: " + remoteMessage.getClass().toString());
-
-
     // Check if message contains a data payload.
     if (remoteMessage.getData().size() == 0 || remoteMessage.toIntent().getExtras() == null) {
-      Log.e(TAG, "521 Message data payload: " + remoteMessage.getData());
       return;
     }
 
     // Check if message contains a notification payload.
     if (remoteMessage.getNotification() != null) {
-      Log.d(TAG, "527 Message Notification Body: " + remoteMessage.getNotification().getBody());
+      Log.e(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
     }
 
     final Map<String, String> data = remoteMessage.getData();
-    Log.e(TAG, "531 data.get(\"title\") " + data.get("title"));
-    Log.e(TAG, "532 data.get(\"body\") " + data.get("body"));
-
-    Log.e(TAG, "534 data.get(\"action\") " + data.get("action"));
-    Log.e(TAG, "535 data.get(\"descriPedido\") " + data.get("descriPedido"));
-
-    Log.e(TAG, "537 data.get(\"cod_pedido\") " + data.get("cod_pedido"));
-    Log.e(TAG, "538 data.get(\"data_chat\") " + data.get("data_chat"));
 
     JSONObject dataChat = null;
     String subtotalPed = "0.00";
@@ -544,9 +451,6 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
       dataChat = new JSONObject(data.get("data_chat"));
 
       subtotalPed = dataChat.getString("subtotalPedido");
-      Log.e(TAG, "547 data.get(\"data_chat\") " + dataChat);
-      Log.e(TAG, "548 data.get(\"data_chat\") " + subtotalPed);
-
     } catch (JSONException e) {
       e.printStackTrace();
     }
