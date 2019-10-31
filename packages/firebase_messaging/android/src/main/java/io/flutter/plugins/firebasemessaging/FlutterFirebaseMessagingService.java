@@ -9,8 +9,10 @@ import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Process;
+import android.text.format.DateUtils;
 import android.util.Log;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.google.firebase.messaging.FirebaseMessagingService;
@@ -30,10 +32,38 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.media.RingtoneManager;
+import android.widget.RemoteViews;
+
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.RemoteInput;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+
+import static android.R.drawable.ic_delete;
+
 public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
 
-  public static final String ACTION_REMOTE_MESSAGE =
-      "io.flutter.plugins.firebasemessaging.NOTIFICATION";
+  public static final String ACTION_REMOTE_MESSAGE = "io.flutter.plugins.firebasemessaging.NOTIFICATION";
   public static final String EXTRA_REMOTE_MESSAGE = "notification";
 
   public static final String ACTION_TOKEN = "io.flutter.plugins.firebasemessaging.TOKEN";
@@ -41,8 +71,12 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
 
   private static final String SHARED_PREFERENCES_KEY = "io.flutter.android_fcm_plugin";
   private static final String BACKGROUND_SETUP_CALLBACK_HANDLE_KEY = "background_setup_callback";
-  private static final String BACKGROUND_MESSAGE_CALLBACK_HANDLE_KEY =
-      "background_message_callback";
+  private static final String BACKGROUND_MESSAGE_CALLBACK_HANDLE_KEY = "background_message_callback";
+  private static final String SETUP_ACTIVITY_CLASS_HANDLE_KEY = "setup_activity_class_callback";
+  private static final String SETUP_ACTIVITY_PACKAGE_HANDLE_KEY = "setup_activity_package_callback";
+  private static final String SETUP_ACTIVITY_IC_LAUNCHER_HANDLE_KEY = "setup_ic_launcher_callback";
+  private static final String SETUP_ACTIVITY_VIEW_COLLAPSE_HANDLE_KEY = "setup_view_collapse_callback";
+  private static final String SETUP_ACTIVITY_TIMESTAMP_HANDLE_KEY = "setup_timestamp_callback";
 
   // TODO(kroikie): make isIsolateRunning per-instance, not static.
   private static AtomicBoolean isIsolateRunning = new AtomicBoolean(false);
@@ -51,11 +85,16 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
   private static FlutterNativeView backgroundFlutterView;
 
   private static MethodChannel backgroundChannel;
+  private static Class<?> classNameActivity;
+  private static String packageNameActivity;
+  private static int icLauncherActivity;
+  private static Class<?> classNameReceiver;
+  private static int viewCollapseNotify;
+  private static int timeStamp;
 
   private static Long backgroundMessageHandle;
 
-  private static List<RemoteMessage> backgroundMessageQueue =
-      Collections.synchronizedList(new LinkedList<RemoteMessage>());
+  private static List<RemoteMessage> backgroundMessageQueue = Collections.synchronizedList(new LinkedList<RemoteMessage>());
 
   private static PluginRegistry.PluginRegistrantCallback pluginRegistrantCallback;
 
@@ -63,17 +102,66 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
 
   private static Context backgroundContext;
 
+  public static final String NOTIFICATION_REPLY = "NotificationReply";
+  public static final int NOTIFICATION_ID = 200;
+  public static final int REQUEST_CODE_APPROVE = 101;
+  public static final String KEY_INTENT_APPROVE = "keyintentaccept";
+
+  public static final String NOTIFICATION_CHANNEL_ID = "channel_id";
+  public static final String CHANNEL_NAME = "Notificaciones de mensage";
+
+  private int numMessages = 0;
+
+  public static String REPLY_ACTION = "io.flutter.plugins.firebasemessaging.REPLY_ACTION";
+
+  private int mNotificationId;
+  private int mMessageId;
+
+  private static final String KEY_MESSAGE_ID = "key_message_id";
+  private static final String KEY_NOTIFY_ID = "key_notify_id";
+
   @Override
   public void onCreate() {
+    Log.d(TAG, "125 onCreate() executed!");
+
     super.onCreate();
 
     backgroundContext = getApplicationContext();
     FlutterMain.ensureInitializationComplete(backgroundContext, null);
 
+    if( classNameReceiver == null) {
+      try {
+        classNameReceiver = Class.forName("com.amazingwork.amazingwork.NotificationReceiver");
+      } catch (ClassNotFoundException e) {
+        e.printStackTrace();
+      }
+    }
+
+    if(classNameActivity == null || packageNameActivity == null) {
+      SharedPreferences p = backgroundContext.getSharedPreferences(SHARED_PREFERENCES_KEY, 0);
+
+      String activityClassName = p.getString(SETUP_ACTIVITY_CLASS_HANDLE_KEY, "com.amazingwork.amazingwork.MainActivity");
+      packageNameActivity = p.getString(SETUP_ACTIVITY_PACKAGE_HANDLE_KEY, "com.amazingwork.amazingworkmobile");
+      icLauncherActivity = p.getInt(SETUP_ACTIVITY_IC_LAUNCHER_HANDLE_KEY, 2131361792);
+      viewCollapseNotify = p.getInt(SETUP_ACTIVITY_VIEW_COLLAPSE_HANDLE_KEY, 0);
+
+      classNameActivity = null;
+      try {
+        assert activityClassName != null;
+        classNameActivity = Class.forName(activityClassName);
+      } catch (ClassNotFoundException e) {
+        e.printStackTrace();
+      }
+    }
+
+    Log.d(TAG, "157 (!isIsolateRunning.get()) es: " + (!isIsolateRunning.get()));
     // If background isolate is not running start it.
     if (!isIsolateRunning.get()) {
+      Log.d(TAG, "160 isIsolateRunning no se esta ejecutando!!!");
+
       SharedPreferences p = backgroundContext.getSharedPreferences(SHARED_PREFERENCES_KEY, 0);
       long callbackHandle = p.getLong(BACKGROUND_SETUP_CALLBACK_HANDLE_KEY, 0);
+      Log.d(TAG, "164 callbackHandle es: " + (callbackHandle));
       startBackgroundIsolate(backgroundContext, callbackHandle);
     }
   }
@@ -85,6 +173,7 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    */
   @Override
   public void onMessageReceived(final RemoteMessage remoteMessage) {
+    Log.d(TAG, "176 onMessageReceived() executed!");
     // If application is running in the foreground use local broadcast to handle message.
     // Otherwise use the background isolate to handle message.
     if (isApplicationForeground(this)) {
@@ -92,27 +181,28 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
       intent.putExtra(EXTRA_REMOTE_MESSAGE, remoteMessage);
       LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     } else {
+      sendNotification(remoteMessage, this);
       // If background isolate is not running yet, put message in queue and it will be handled
       // when the isolate starts.
-      if (!isIsolateRunning.get()) {
+      /*if (!isIsolateRunning.get()) {
         backgroundMessageQueue.add(remoteMessage);
       } else {
         final CountDownLatch latch = new CountDownLatch(1);
         new Handler(getMainLooper())
-            .post(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    executeDartCallbackInBackgroundIsolate(
-                        FlutterFirebaseMessagingService.this, remoteMessage, latch);
-                  }
-                });
+                .post(
+                        new Runnable() {
+                          @Override
+                          public void run() {
+                            executeDartCallbackInBackgroundIsolate(
+                                    FlutterFirebaseMessagingService.this, remoteMessage, latch);
+                          }
+                        });
         try {
           latch.await();
         } catch (InterruptedException ex) {
           Log.i(TAG, "Exception waiting to execute Dart callback", ex);
         }
-      }
+      }*/
     }
   }
 
@@ -124,9 +214,12 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    */
   @Override
   public void onNewToken(String token) {
+    Log.d(TAG, "217 onNewToken() executed! " + token);
+
     Intent intent = new Intent(ACTION_TOKEN);
     intent.putExtra(EXTRA_TOKEN, token);
     LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    Log.d("222 FIREBASE", "LocalBroadcastManager.getInstance(this).sendBroadcast(intent) enviado a donde???");
   }
 
   /**
@@ -139,11 +232,20 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    *     handling on the dart side.
    */
   public static void startBackgroundIsolate(Context context, long callbackHandle) {
+    Log.d(TAG, "235 startBackgroundIsolate() executed!");
+
     FlutterMain.ensureInitializationComplete(context, null);
-    String appBundlePath = FlutterMain.findAppBundlePath();
-    FlutterCallbackInformation flutterCallback =
-        FlutterCallbackInformation.lookupCallbackInformation(callbackHandle);
+    String appBundlePath = FlutterMain.findAppBundlePath(context);
+    Log.d(TAG, "239 appBundlePath es: " + appBundlePath);
+    Log.d(TAG, "240 callbackHandle es: " + callbackHandle);
+    Log.d(TAG, "241 context.getApplicationContext() es: " + context.getApplicationContext());
+    Log.d(TAG, "242 context.getApplicationContext().getApplicationInfo() es: " + context.getApplicationContext().getApplicationInfo());
+    FlutterCallbackInformation flutterCallback = FlutterCallbackInformation.lookupCallbackInformation(callbackHandle);
+
+    Log.d(TAG, "245 flutterCallback == null es: " + (flutterCallback == null));
     if (flutterCallback == null) {
+      Log.d(TAG, "247 flutterCallback es null return :(");
+
       Log.e(TAG, "Fatal: failed to find callback");
       return;
     }
@@ -162,6 +264,8 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
       args.libraryPath = flutterCallback.callbackLibraryPath;
       backgroundFlutterView.runFromBundle(args);
       pluginRegistrantCallback.registerWith(backgroundFlutterView.getPluginRegistry());
+
+      Log.d(TAG, "268 startBackgroundIsolate() completed!");
     }
   }
 
@@ -170,15 +274,19 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    * Dart side once all background initialization is complete via `FcmDartService#initialized`.
    */
   public static void onInitialized() {
+    Log.e(TAG, "277 onInitialized() executed!");
     isIsolateRunning.set(true);
     synchronized (backgroundMessageQueue) {
       // Handle all the messages received before the Dart isolate was
       // initialized, then clear the queue.
+      Log.e(TAG, "282 Manejando los mensajes agregados a cola :)");
       Iterator<RemoteMessage> i = backgroundMessageQueue.iterator();
       while (i.hasNext()) {
+        Log.e(TAG, "285 while (i.hasNext()) looping");
         executeDartCallbackInBackgroundIsolate(backgroundContext, i.next(), null);
       }
       backgroundMessageQueue.clear();
+      Log.e(TAG, "289 backgroundMessageQueue limpiado");
     }
   }
 
@@ -189,7 +297,26 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    * @param channel Background method channel.
    */
   public static void setBackgroundChannel(MethodChannel channel) {
+    Log.d(TAG, "300 setBackgroundChannel() executed!");
+
     backgroundChannel = channel;
+  }
+
+  public static void setPluginRegistryRegistrar(Context context, String classNameActivity, String packageNameActivity, int icLauncherId, int viewCollapseNotify, int timeStamp) {
+    // Store background setup handle in shared preferences so it can be retrieved by other application instances.
+    SharedPreferences prefs = context.getSharedPreferences(SHARED_PREFERENCES_KEY, 0);
+    prefs.edit().putString(SETUP_ACTIVITY_CLASS_HANDLE_KEY, classNameActivity).apply();
+    prefs.edit().putString(SETUP_ACTIVITY_PACKAGE_HANDLE_KEY, packageNameActivity).apply();
+    prefs.edit().putInt(SETUP_ACTIVITY_IC_LAUNCHER_HANDLE_KEY, icLauncherId).apply();
+    prefs.edit().putInt(SETUP_ACTIVITY_VIEW_COLLAPSE_HANDLE_KEY, viewCollapseNotify).apply();
+    prefs.edit().putInt(SETUP_ACTIVITY_TIMESTAMP_HANDLE_KEY, timeStamp).apply();
+
+    Log.d(TAG, "314 registrar variable obtenida desde plugin");
+  }
+
+  public static void getPluginRegistryRegistrar() {
+    Log.d(TAG, "318 getPluginRegistryRegistrar()");
+    Log.d(TAG, "319 classNameActivity  es: " + classNameActivity);
   }
 
   /**
@@ -201,6 +328,7 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    * @param handle Handle representing the Dart side method that will handle background messages.
    */
   public static void setBackgroundMessageHandle(Context context, Long handle) {
+    Log.d(TAG, "331 setBackgroundMessageHandle() executed!");
     backgroundMessageHandle = handle;
 
     // Store background message handle in shared preferences so it can be retrieved
@@ -220,6 +348,8 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    *     background method channel.
    */
   public static void setBackgroundSetupHandle(Context context, long setupBackgroundHandle) {
+    Log.d(TAG, "351 setBackgroundSetupHandle() executed!");
+    Log.d(TAG, "352 setupBackgroundHandle es: " + setupBackgroundHandle);
     // Store background setup handle in shared preferences so it can be retrieved
     // by other application instances.
     SharedPreferences prefs = context.getSharedPreferences(SHARED_PREFERENCES_KEY, 0);
@@ -237,6 +367,8 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    * @return Dart side background message handle.
    */
   public static Long getBackgroundMessageHandle(Context context) {
+    Log.d(TAG, "370 getBackgroundMessageHandle() executed!");
+
     return context
         .getSharedPreferences(SHARED_PREFERENCES_KEY, 0)
         .getLong(BACKGROUND_MESSAGE_CALLBACK_HANDLE_KEY, 0);
@@ -253,8 +385,11 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    * @param latch If set will count down when the Dart side message processing is complete. Allowing
    *     any waiting threads to continue.
    */
-  private static void executeDartCallbackInBackgroundIsolate(
-      Context context, RemoteMessage remoteMessage, final CountDownLatch latch) {
+  private static void executeDartCallbackInBackgroundIsolate(Context context, RemoteMessage remoteMessage, final CountDownLatch latch) {
+    Log.d(TAG, "389 executeDartCallbackInBackgroundIsolate() executed!");
+    Log.d(TAG, "390 a new background message is received or after background method channel setup for queued messages received during setup.");
+
+    Log.d(TAG, "392 backgroundChannel es: " + backgroundChannel);
     if (backgroundChannel == null) {
       throw new RuntimeException(
           "setBackgroundChannel was not called before messages came in, exiting.");
@@ -282,7 +417,9 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
 
     args.put("message", messageData);
 
+    Log.d(TAG, "420 FirebaseMessagingPlugin ->  channel.invokeMethod(handleBackgroundMessage) Invocando");
     backgroundChannel.invokeMethod("handleBackgroundMessage", args, result);
+    Log.d(TAG, "422 FirebaseMessagingPlugin ->  channel.invokeMethod(handleBackgroundMessage) Invocando");
   }
 
   /**
@@ -292,6 +429,8 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    * @param callback Application class which implements PluginRegistrantCallback.
    */
   public static void setPluginRegistrant(PluginRegistry.PluginRegistrantCallback callback) {
+    Log.d(TAG, "432 FirebaseMessagingPlugin ->  setPluginRegistrant(PluginRegistry.PluginRegistrantCallback callback) executed!");
+    Log.d(TAG, "433 FirebaseMessagingPlugin ->  callback es: " + callback);
     pluginRegistrantCallback = callback;
   }
 
@@ -306,27 +445,304 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    */
   // TODO(kroikie): Find a better way to determine application state.
   private static boolean isApplicationForeground(Context context) {
+    Log.d(TAG, "448 isApplicationForeground(context) es: " + context.toString());
     KeyguardManager keyguardManager =
         (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
 
-    if (keyguardManager.isKeyguardLocked()) {
+    Log.d(TAG, "452 keyguardManager es: " + keyguardManager.toString());
+
+    Log.d(TAG, "454 keyguardManager.inKeyguardRestrictedInputMode() es: " + keyguardManager.inKeyguardRestrictedInputMode());
+
+    if (keyguardManager.inKeyguardRestrictedInputMode()) {
+      Log.d(TAG, "457 keyguardManager.inKeyguardRestrictedInputMode() es true -> retornando :( ");
       return false;
     }
     int myPid = Process.myPid();
+    Log.d(TAG, "461 myPid es: " + myPid);
 
     ActivityManager activityManager =
         (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
 
     List<ActivityManager.RunningAppProcessInfo> list;
 
+    Log.d(TAG, "468 activityManager es: " + activityManager.toString());
+
+    Log.d(TAG, "470 activityManager.getRunningAppProcesses()) != null es: " + (((activityManager.getRunningAppProcesses()) != null)));
     if ((list = activityManager.getRunningAppProcesses()) != null) {
+      Log.d(TAG, "472 Inicio For pid process");
       for (ActivityManager.RunningAppProcessInfo aList : list) {
         ActivityManager.RunningAppProcessInfo info;
+        Log.d(TAG, "475 myPid es: " + myPid);
+        Log.d(TAG, "476 aList.pid es: " + aList.pid);
+        Log.d(TAG, "477 ((info = aList).pid == myPid) es: " + ((aList.pid == myPid)));
         if ((info = aList).pid == myPid) {
+          Log.d(TAG, "479 myPid es igual de aList.pid: comparando running process");
+
+          Log.d(TAG, "481 aList es: " + aList);
+          Log.d(TAG, "482 info es: " + info);
+
+          Log.d(TAG, "484 aList.importance es: " + aList.importance);
+          Log.d(TAG, "485 info.importance es: " + info.importance);
+
+          Log.d(TAG, "487 ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND es: " + ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
+          Log.d(TAG, "488 ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED es: " + ActivityManager.RunningAppProcessInfo.IMPORTANCE_BACKGROUND);
+          Log.d(TAG, "489 ActivityManager.RunningAppProcessInfo.IMPORTANCE_EMPTY es: " + ActivityManager.RunningAppProcessInfo.IMPORTANCE_EMPTY);
+          Log.d(TAG, "490 ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE es: " + ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE);
+          Log.d(TAG, "491 ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE es: " + ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE);
+
           return info.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
         }
+        Log.d(TAG, "495 myPid es diferente de aList.pid: continuando iteracion");
       }
     }
+
+    Log.d(TAG, "499   activityManager.getRunningAppProcesses()) es null -> retornando :( ");
     return false;
+  }
+
+  // TODO(jh0n4): Improve implementation
+  private void sendNotification(RemoteMessage remoteMessage, Context context) {
+    Log.d(TAG, "505 sendNotification() executed!");
+
+    Log.d(TAG, "507 remoteMessage.getCollapseKey() es: " + remoteMessage.getCollapseKey());
+    Log.d(TAG, "508 remoteMessage.getFrom() es: " + remoteMessage.getFrom());
+    Log.d(TAG, "509 remoteMessage.getMessageId() es: " + remoteMessage.getMessageId());
+    Log.d(TAG, "510 remoteMessage.getMessageType() es: " + remoteMessage.getMessageType());
+    Log.d(TAG, "511 remoteMessage.getTo() es: " + remoteMessage.getTo());
+    Log.d(TAG, "512 remoteMessage.getOriginalPriority() es: " + remoteMessage.getOriginalPriority());
+    Log.d(TAG, "513 remoteMessage.getPriority() es: " + remoteMessage.getPriority());
+    Log.d(TAG, "514 remoteMessage.getSentTime() es: " + remoteMessage.getSentTime());
+    Log.d(TAG, "515 remoteMessage.getTtl() es: " + remoteMessage.getTtl());
+    Log.d(TAG, "516 remoteMessage.getClass().toString() es: " + remoteMessage.getClass().toString());
+
+
+    // Check if message contains a data payload.
+    if (remoteMessage.getData().size() == 0 || remoteMessage.toIntent().getExtras() == null) {
+      Log.e(TAG, "521 Message data payload: " + remoteMessage.getData());
+      return;
+    }
+
+    // Check if message contains a notification payload.
+    if (remoteMessage.getNotification() != null) {
+      Log.d(TAG, "527 Message Notification Body: " + remoteMessage.getNotification().getBody());
+    }
+
+    final Map<String, String> data = remoteMessage.getData();
+    Log.e(TAG, "531 data.get(\"title\") " + data.get("title"));
+    Log.e(TAG, "532 data.get(\"body\") " + data.get("body"));
+
+    Log.e(TAG, "534 data.get(\"action\") " + data.get("action"));
+    Log.e(TAG, "535 data.get(\"descriPedido\") " + data.get("descriPedido"));
+
+    Log.e(TAG, "537 data.get(\"cod_pedido\") " + data.get("cod_pedido"));
+    Log.e(TAG, "538 data.get(\"data_chat\") " + data.get("data_chat"));
+
+    JSONObject dataChat = null;
+    String subtotalPed = "0.00";
+
+    try {
+      dataChat = new JSONObject(data.get("data_chat"));
+
+      subtotalPed = dataChat.getString("subtotalPedido");
+      Log.e(TAG, "547 data.get(\"data_chat\") " + dataChat);
+      Log.e(TAG, "548 data.get(\"data_chat\") " + subtotalPed);
+
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+
+    int colorNotify = Color.GRAY;
+
+    try {
+      colorNotify = Integer.decode(data.get("color"));
+    } catch (Exception e) {
+      Log.e(TAG, "Could not parse " + e);
+    }
+
+    int NotifyId = 0;
+
+    try {
+      NotifyId = Integer.parseInt(data.get("tag"));
+    } catch(NumberFormatException nfe) {
+      Log.e(TAG, "Could not parse " + nfe);
+    }
+
+    Intent replyIntent = new Intent(context, classNameReceiver);
+    replyIntent.putExtra("channelId", data.get("tag"));
+    replyIntent.putExtra(KEY_INTENT_APPROVE, REQUEST_CODE_APPROVE);
+    replyIntent.putExtra("data", remoteMessage.toIntent().getExtras());
+
+    PendingIntent approvePendingIntent = PendingIntent.getBroadcast(
+            context,
+            REQUEST_CODE_APPROVE,
+            replyIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT
+    );
+
+    // 1. Build label
+    String replyLabel = "Enviar mensaje";
+    RemoteInput remoteInput = new RemoteInput.Builder(NOTIFICATION_REPLY)
+            .setLabel(replyLabel)
+            .build();
+
+    // 2. Build action
+    NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(
+            ic_delete, "Responder", approvePendingIntent)
+            .addRemoteInput(remoteInput)
+//            .setAllowGeneratedReplies(true)
+            .build();
+
+    // 3. Build notification
+    Intent intent = new Intent(context, classNameActivity);
+    intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            .setPackage(packageNameActivity)
+            .setAction(Intent.ACTION_MAIN)
+            .addCategory(Intent.CATEGORY_LAUNCHER)
+            .putExtras(remoteMessage.toIntent().getExtras());
+
+
+    PendingIntent pi = PendingIntent.getActivity(context, NotifyId, intent, PendingIntent.FLAG_UPDATE_CURRENT); // FLAG_ONE_SHOT
+
+//    int imageId = registrar.activeContext().getResources().getIdentifier("ic_launcher", "mipmap", registrar.activeContext().getPackageName());
+//    Bitmap icon = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
+
+//    String channelId = getString(R.string.default_notification_channel_id);
+    NotificationCompat.Builder notificationBuilder =
+            new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
+                    .setSmallIcon(icLauncherActivity, 10)   //.setSmallIcon(R.mipmap.ic_launcher, 10)
+                    .setContentTitle(data.get("title"))           //notification.getTitle()
+                    .setContentText(data.get("body"))             //notification.getBody()  0x0288d1-Azul 0x4caf50-Verde
+                    .setAutoCancel(true)
+                    .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                    .setContentIntent(pi)
+//                    .setContentInfo("setContentInfo")
+//                    .setLargeIcon(getLargeIcon(data))
+//                    .setTicker("setTicker")
+                    .setColor(colorNotify)
+                    .setLights(Color.GRAY, 1000, 300)
+                    .setColorized(true)
+//                    .setDefaults(Notification.DEFAULT_VIBRATE)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setVibrate(new long[] { 1000, 1000, 1000, 1000, 1000 })
+                    .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                    .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
+//                    .setContentInfo("setContentInfo")
+                    .setNumber(++numMessages)
+                    //.setStyle(new NotificationCompat.DecoratedCustomViewStyle());
+                    //.setCustomContentView(collapsedView)
+                    //.setCustomBigContentView(expandedView)
+                    .setStyle(new NotificationCompat.BigPictureStyle()
+                            .setBigContentTitle(data.get("title"))
+                            .setSummaryText(data.get("description"))
+                            .bigPicture(getLargeIcon(data))
+                            .bigLargeIcon(null));
+
+    NotificationManager notificationManager =
+            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+    // Since android Oreo notification channel is needed.
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+      CharSequence description = "Channel Description"; //CharSequence description = getString(R.string.default_notification_channel_id);
+      String name = "YOUR_CHANNEL_NAME";      // CharSequence channelName = "Some Channel";
+      int importance = NotificationManager.IMPORTANCE_HIGH;
+
+      NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, CHANNEL_NAME, importance);
+      channel.setDescription("YOUR_NOTIFICATION_CHANNEL_DISCRIPTION");
+
+      channel.enableLights(true);
+      channel.setLightColor(Color.RED);
+      channel.enableVibration(true);
+      channel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
+
+      notificationManager.createNotificationChannel(channel);
+    }
+
+    if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+      notificationBuilder.addAction(replyAction);
+    }
+
+    /*if( data.get("action").equals("valor_enviado") ) {
+      Intent approveReceive = new Intent(context, classNameReceiver);
+      approveReceive.setAction("com.amazingwork.amazingwork.PEDIDO");
+
+      approveReceive.putExtra("channelId", data.get("tag"));
+      approveReceive.putExtra(KEY_INTENT_APPROVE, REQUEST_CODE_APPROVE);
+      approveReceive.putExtra("data", remoteMessage.toIntent().getExtras());
+
+      PendingIntent pendingIntentYes = PendingIntent.getBroadcast(this, 12345, approveReceive, PendingIntent.FLAG_UPDATE_CURRENT);
+      notificationBuilder.addAction(ic_menu_send, "Aprobar", pendingIntentYes);
+    }*/
+
+    notificationManager.notify(NotifyId, notificationBuilder.build());
+  }
+
+  private Bitmap getLargeIcon(Map<String, String> data) {
+    Bitmap bmpIcon = null;
+    try {
+      InputStream in = new URL(data.get("image")).openStream();    //InputStream in = new URL(notification.getImageUrl().toString()).openStream();
+      bmpIcon = BitmapFactory.decodeStream(in);
+
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+//    return getCircleBitmap(bmpIcon);
+    return bmpIcon;
+  }
+
+  private Bitmap getCircleBitmap(Bitmap bitmap) {
+    final Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
+            bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+    final Canvas canvas = new Canvas(output);
+
+    final int color = Color.RED;
+    final Paint paint = new Paint();
+    final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+    final RectF rectF = new RectF(rect);
+
+    paint.setAntiAlias(true);
+    canvas.drawARGB(0, 0, 0, 0);
+    paint.setColor(color);
+    canvas.drawOval(rectF, paint);
+
+    paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+    canvas.drawBitmap(bitmap, rect, rect, paint);
+
+    bitmap.recycle();
+
+    return output;
+  }
+
+  private PendingIntent getReplyPendingIntent(Context context, Class<?> broadCastReceiver) {
+    Intent intent;
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+      intent = getReplyMessageIntent(context, mNotificationId, mMessageId, broadCastReceiver);
+
+      return PendingIntent.getBroadcast(
+              context,
+              REQUEST_CODE_APPROVE, // 100
+              intent,
+              PendingIntent.FLAG_UPDATE_CURRENT
+      );
+
+    } else {
+      // start your activity
+      intent = getReplyMessageIntent(context, mNotificationId, mMessageId, broadCastReceiver);
+      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      return PendingIntent.getActivity(
+              context,
+              REQUEST_CODE_APPROVE, // 100
+              intent,
+              PendingIntent.FLAG_UPDATE_CURRENT
+      );
+    }
+  }
+
+  private Intent getReplyMessageIntent(Context context, int notificationId, int messageId, Class<?> broadCastReceiver) {
+    Intent intent = new Intent(context, broadCastReceiver);
+    intent.setAction(REPLY_ACTION);
+    intent.putExtra(KEY_NOTIFY_ID, notificationId);
+    intent.putExtra(KEY_MESSAGE_ID, messageId);
+    return intent;
   }
 }
