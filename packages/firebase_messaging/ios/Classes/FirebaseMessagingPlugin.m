@@ -265,14 +265,14 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 }
 
 // [START receive_message]  *** Event FCM se sobreescribe cuando se declara method native userNotificationCenter:didReceiveNotificationResponse
-- (BOOL)application:(UIApplication *)application
+/*- (BOOL)application:(UIApplication *)application
     didReceiveRemoteNotification:(NSDictionary *)userInfo
           fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))completionHandler {
     
   [self didReceiveRemoteNotification:userInfo];
   completionHandler(UIBackgroundFetchResultNoData);
   return YES;
-}
+}*/
 // [END receive_message]
 
 // [START ios_10_message_handling]  ***
@@ -301,12 +301,10 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 }*/
 
 // Handle notification messages after display notification is tapped by the user.   ***
-/*- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
            didReceiveNotificationResponse:(UNTextInputNotificationResponse *)response
          withCompletionHandler:(void (^)(void))completionHandler  API_AVAILABLE(ios(10.0)){
-    NSLog(@"326 userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler executed! :)");
     //fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))completionHandler {
-
 
     if ([response.notification.request.content.categoryIdentifier isEqualToString:generalCategory]) {
         // Handle the actions for the expired timer.
@@ -316,9 +314,9 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
             
             [self handleReplyActionWithResponse:response];
 
-        } else if ([response.actionIdentifier isEqualToString:@"APPROVE_ACTION"]) {
-            NSLog(@"339 Button aprobar pressed! :)");
-        }
+        } /*else if ([response.actionIdentifier isEqualToString:@"APPROVE_ACTION"]) {
+            NSLog(@"320 Button aprobar pressed! :)");
+        }*/
 
     }
     
@@ -326,7 +324,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     // Must be called when finished
     [self didReceiveRemoteNotification:userInfo];
     completionHandler();    //completionHandler(UIBackgroundFetchResultNoData);
-}*/
+}
 
 - (void) handleReplyActionWithResponse:(UNTextInputNotificationResponse *)response  API_AVAILABLE(ios(10.0)){    
     ChatworkService *chatService = [[ChatworkService alloc] init];
