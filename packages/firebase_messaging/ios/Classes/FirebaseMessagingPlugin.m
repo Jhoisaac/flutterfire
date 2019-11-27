@@ -9,6 +9,7 @@
 
 #import "ChatworkService.h"
 #import "MessagingService.h"
+#import "Constants.h"
 
 //#import <UserNotifications/UserNotifications.h>   flutter 1.10.2
 
@@ -39,7 +40,6 @@ NSString *const kGCMMessageIDKey = @"gcm.message_id";
 
 NSString *const replyAction = @"REPLY_IDENTIFIER";
 NSString *const generalCategory = @"FLUTTER_NOTIFICATION_CLICK";
-NSString *const SERVER_DOMAIN = @"amazingwork.com";
 NSString *const COLOR_PROVEEDOR = @"0x4caf50";
 NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 

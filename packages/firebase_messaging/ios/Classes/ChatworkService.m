@@ -7,6 +7,7 @@
 
 #import "ChatworkService.h"
 #import "AmzwkHttpUtil.h"
+#import "Constants.h"
 
 @interface ChatworkService()
 
@@ -18,11 +19,10 @@
     NSString *_key;
 }
 
-NSString *const CHAT_API_DOMAIN = @"https://amazingwork.com/api/chat";
 NSString *const SHARED_PREFERENCES_NAME = @"FlutterSharedPreferences";
 
 - (int) saveMessageWithTextMessage:(NSString *)textMessage andChannelId:(NSString *)channelId andCompletionHandler:(void (^_Nonnull)(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error))completionHandler {
-    AmzwkHttpUtil *networkHelper = [[AmzwkHttpUtil alloc] initWithUrl: [NSString stringWithFormat: @"%@/%@/%@", CHAT_API_DOMAIN, channelId, @"message/save"]];
+    AmzwkHttpUtil *networkHelper = [[AmzwkHttpUtil alloc] initWithUrl: [NSString stringWithFormat: @"%@/%@/%@", __CHAT_API_DOMAIN, channelId, @"message/save"]];
         
     NSString *bodyParams =[NSString stringWithFormat:@"message=%@", textMessage];
     //Convert the String to Data
