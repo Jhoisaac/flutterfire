@@ -45,8 +45,8 @@ public class FirebaseMessagingPlugin extends BroadcastReceiver
   private Context applicationContext;
   private Activity mainActivity;
 
-  private final Registrar registrar;
-  private final MethodChannel channelOld;
+  private Registrar registrar;
+  /*private final MethodChannel channelOld;*/
 
   public static void registerWith(Registrar registrar) {
     /*final MethodChannel channel = new MethodChannel(registrar.messenger(), "plugins.flutter.io/firebase_messaging");
@@ -60,6 +60,7 @@ public class FirebaseMessagingPlugin extends BroadcastReceiver
 
     FirebaseMessagingPlugin instance = new FirebaseMessagingPlugin();
     instance.setActivity(registrar.activity());
+    instance.setRegistrar(registrar);
     registrar.addNewIntentListener(instance);
     instance.onAttachedToEngine(registrar.context(), registrar.messenger());
   }
@@ -104,6 +105,10 @@ public class FirebaseMessagingPlugin extends BroadcastReceiver
 
   private void setActivity(Activity flutterActivity) {
     this.mainActivity = flutterActivity;
+  }
+
+  private void setRegistrar(Registrar registrar) {
+    this.registrar = registrar;
   }
 
   @Override
@@ -197,6 +202,7 @@ public class FirebaseMessagingPlugin extends BroadcastReceiver
       long setupCallbackHandle = 0;
       long backgroundMessageHandle = 0;
       try {
+        @SuppressWarnings("unchecked")
         Map<String, Long> callbacks = ((Map<String, Long>) call.arguments);
         setupCallbackHandle = callbacks.get("setupHandle");
         backgroundMessageHandle = callbacks.get("backgroundHandle");
