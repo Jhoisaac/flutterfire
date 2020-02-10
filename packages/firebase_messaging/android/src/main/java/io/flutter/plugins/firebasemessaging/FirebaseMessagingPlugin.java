@@ -76,7 +76,7 @@ public class FirebaseMessagingPlugin extends BroadcastReceiver
     backgroundCallbackChannel.setMethodCallHandler(this);
     FlutterFirebaseMessagingService.setBackgroundChannel(backgroundCallbackChannel);
 
-    int imageId = registrar.activeContext().getResources().getIdentifier("ic_launcher", "mipmap", registrar.activeContext().getPackageName());
+    int imageId = registrar.activeContext().getResources().getIdentifier("ic_notification", "mipmap", registrar.activeContext().getPackageName());
 
     FlutterFirebaseMessagingService.getPluginRegistryRegistrar();
 
