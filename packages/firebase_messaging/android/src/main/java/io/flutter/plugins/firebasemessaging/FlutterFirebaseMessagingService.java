@@ -14,6 +14,8 @@ import android.os.Handler;
 import android.os.Process;
 import android.text.format.DateUtils;
 import android.util.Log;
+
+import androidx.annotation.RequiresApi;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
@@ -29,6 +31,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -166,6 +169,7 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
    *
    * @param remoteMessage Object representing the message received from Firebase Cloud Messaging.
    */
+  @RequiresApi(api = Build.VERSION_CODES.KITKAT)
   @Override
   public void onMessageReceived(final RemoteMessage remoteMessage) {
     // If application is running in the foreground use local broadcast to handle message.
@@ -431,6 +435,7 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
   }
 
   // TODO(jh0n4): Improve implementation
+  @RequiresApi(api = Build.VERSION_CODES.KITKAT)
   private void sendNotification(RemoteMessage remoteMessage, Context context) {
     // Check if message contains a data payload.
     if (remoteMessage.getData().size() == 0 || remoteMessage.toIntent().getExtras() == null) {
@@ -580,16 +585,12 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
     notificationManager.notify(NotifyId, notificationBuilder.build());
   }
 
+  @RequiresApi(api = Build.VERSION_CODES.KITKAT)
   private Bitmap getLargeIcon(Map<String, String> data) {
     String imageNotif = data.get("image");
-
-    if( data.get("action") == "envio_chat" ) {
-      imageNotif = data.get("type") == "image" ? data.get("messageImage") : data.get("image");
-    }
-
     Bitmap bmpIcon = null;
     try {
-      InputStream in = new URL(imageNotif).openStream();    //InputStream in = new URL(notification.getImageUrl().toString()).openStream();
+      InputStream in = new URL(data.get("image")).openStream();    //InputStream in = new URL(notification.getImageUrl().toString()).openStream();
       bmpIcon = BitmapFactory.decodeStream(in);
 
     } catch (IOException e) {
