@@ -581,9 +581,15 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
   }
 
   private Bitmap getLargeIcon(Map<String, String> data) {
+    String imageNotif = data.get("image");
+
+    if( data.get("action") == "envio_chat" ) {
+      imageNotif = data.get("type") == "image" ? data.get("messageImage") : data.get("image");
+    }
+
     Bitmap bmpIcon = null;
     try {
-      InputStream in = new URL(data.get("image")).openStream();    //InputStream in = new URL(notification.getImageUrl().toString()).openStream();
+      InputStream in = new URL(imageNotif).openStream();    //InputStream in = new URL(notification.getImageUrl().toString()).openStream();
       bmpIcon = BitmapFactory.decodeStream(in);
 
     } catch (IOException e) {
