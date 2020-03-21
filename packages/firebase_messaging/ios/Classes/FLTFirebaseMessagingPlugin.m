@@ -267,6 +267,8 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
   [self didReceiveRemoteNotification:remoteMessage.appData];
 }
 
+// [START ios_10_message_handling]
+// Receive displayed notifications for iOS 10 devices.
 // Received data message on iOS 10 devices while app is in the foreground.
 // Only invoked if method swizzling is disabled and UNUserNotificationCenterDelegate has been
 // registered in AppDelegate
@@ -274,15 +276,27 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
        willPresentNotification:(UNNotification *)notification
          withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler
     NS_AVAILABLE_IOS(10.0) {
+  // NSLog(@"360 userNotificationCenter:willPresentNotification::withCompletionHandler: executed!");
+
   NSDictionary *userInfo = notification.request.content.userInfo;
+
+  // Print full message.
+  // NSLog(@"userInfo es: %@", userInfo);
+
+  // Print message ID.
+  // NSLog(@"Message ID: %@", userInfo[kGCMMessageIDKey]);
+
   // Check to key to ensure we only handle messages from Firebase
   if (userInfo[kGCMMessageIDKey]) {
+    // With swizzling disabled you must let Messaging know about the message, for Analytics
     [[FIRMessaging messaging] appDidReceiveMessage:userInfo];
     [_channel invokeMethod:@"onMessage" arguments:userInfo];
+    // Change this to your preferred presentation option  -- UNNotificationPresentationOptionAlert
     completionHandler(UNNotificationPresentationOptionNone);
   }
 }
 
+/* Override method Tap notification
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center
     didReceiveNotificationResponse:(UNNotificationResponse *)response
              withCompletionHandler:(void (^)(void))completionHandler NS_AVAILABLE_IOS(10.0) {
@@ -292,6 +306,33 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     [_channel invokeMethod:@"onResume" arguments:userInfo];
     completionHandler();
   }
+}*/
+
+// Handle notification messages after display notification is tapped by the user.
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+           didReceiveNotificationResponse:(UNTextInputNotificationResponse *)response
+         withCompletionHandler:(void (^)(void))completionHandler  API_AVAILABLE(ios(10.0)) {
+    //fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))completionHandler {
+
+    if ([response.notification.request.content.categoryIdentifier isEqualToString:generalCategory]) {
+        // Handle the actions for the expired timer.
+        if ([response.actionIdentifier isEqualToString:replyAction]) {
+            //NSLog(@"319 Button responder pressed! :)");
+            //NSLog(@"320 response.userText es: %@", response.userText);
+            
+            [self handleReplyActionWithResponse:response];
+
+        } /*else if ([response.actionIdentifier isEqualToString:@"APPROVE_ACTION"]) {
+            NSLog(@"325 Button aprobar pressed! :)");
+        }*/
+    }
+    
+    NSDictionary *userInfo = response.notification.request.content.userInfo;
+    if (userInfo[kGCMMessageIDKey]) {
+      [self didReceiveRemoteNotification:userInfo];
+      // Must be called when finished    
+      completionHandler();    //completionHandler(UIBackgroundFetchResultNoData);
+    }
 }
 
 #endif
@@ -340,66 +381,58 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 }
 
 // [START receive_message]  *** Event FCM se sobreescribe cuando se declara method native userNotificationCenter:didReceiveNotificationResponse
-/*- (BOOL)application:(UIApplication *)application
+- (BOOL)application:(UIApplication *)application
     didReceiveRemoteNotification:(NSDictionary *)userInfo
           fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))completionHandler {
     
   [self didReceiveRemoteNotification:userInfo];
   completionHandler(UIBackgroundFetchResultNoData);
   return YES;
-}*/
-// [END receive_message]
+} // [END receive_message]
 
-// [START ios_10_message_handling]  ***
-// Receive displayed notifications for iOS 10 devices.
-// Handle incoming notification messages while app is in the foreground.
-/*- (void)userNotificationCenter:(UNUserNotificationCenter *)center
-       willPresentNotification:(UNNotification *)notification
-         withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler  API_AVAILABLE(ios(10.0)){
-  NSDictionary *userInfo = notification.request.content.userInfo;
-    
-    NSLog(@"305 userNotificationCenter:willPresentNotification::withCompletionHandler: executed!");
-
-  // With swizzling disabled you must let Messaging know about the message, for Analytics
-  // [[FIRMessaging messaging] appDidReceiveMessage:userInfo];
-
-  // Print message ID.
-  if (userInfo[kGCMMessageIDKey]) {
-    NSLog(@"Message ID: %@", userInfo[kGCMMessageIDKey]);
-  }
-
-  // Print full message.
-  NSLog(@"userInfo es: %@", userInfo);
-
-  // Change this to your preferred presentation option
-  completionHandler(UNNotificationPresentationOptionAlert);
-}*/
-
-// Handle notification messages after display notification is tapped by the user.   ***
-- (void)userNotificationCenter:(UNUserNotificationCenter *)center
-           didReceiveNotificationResponse:(UNTextInputNotificationResponse *)response
-         withCompletionHandler:(void (^)(void))completionHandler  API_AVAILABLE(ios(10.0)){
-    //fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))completionHandler {
-
-    if ([response.notification.request.content.categoryIdentifier isEqualToString:generalCategory]) {
-        // Handle the actions for the expired timer.
-        if ([response.actionIdentifier isEqualToString:replyAction]) {
-            //NSLog(@"333 Button responder pressed! :)");
-            //NSLog(@"334 response.userText es: %@", response.userText);
-            
-            [self handleReplyActionWithResponse:response];
-
-        } /*else if ([response.actionIdentifier isEqualToString:@"APPROVE_ACTION"]) {
-            NSLog(@"320 Button aprobar pressed! :)");
-        }*/
-
-    }
-    
-    NSDictionary *userInfo = response.notification.request.content.userInfo;
-    // Must be called when finished
-    [self didReceiveRemoteNotification:userInfo];
-    completionHandler();    //completionHandler(UIBackgroundFetchResultNoData);
+// Flutter requestNotificationPermissions() event ***
+- (void)application:(UIApplication *)application
+    didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+#ifdef DEBUG
+  [[FIRMessaging messaging] setAPNSToken:deviceToken type:FIRMessagingAPNSTokenTypeSandbox];
+#else
+  [[FIRMessaging messaging] setAPNSToken:deviceToken type:FIRMessagingAPNSTokenTypeProd];
+#endif
+  [_channel invokeMethod:@"onToken" arguments:[FIRMessaging messaging].FCMToken];
 }
+
+// Flutter onIosSettingsRegistered() event ???
+// This will only be called for iOS < 10. For iOS >= 10, we make this call when we request
+// permissions.
+- (void)application:(UIApplication *)application
+    didRegisterUserNotificationSettings:(UIUserNotificationSettings *)notificationSettings {
+  NSDictionary *settingsDictionary = @{
+    @"sound" : [NSNumber numberWithBool:notificationSettings.types & UIUserNotificationTypeSound],
+    @"badge" : [NSNumber numberWithBool:notificationSettings.types & UIUserNotificationTypeBadge],
+    @"alert" : [NSNumber numberWithBool:notificationSettings.types & UIUserNotificationTypeAlert],
+    @"provisional" : [NSNumber numberWithBool:NO],
+  };
+  [_channel invokeMethod:@"onIosSettingsRegistered" arguments:settingsDictionary];
+}
+
+- (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
+    NSLog(@"Unable to register for remote notifications: %@", error);
+}
+
+// Flutter onToken() event ***
+- (void)messaging:(nonnull FIRMessaging *)messaging
+    didReceiveRegistrationToken:(nonnull NSString *)fcmToken {
+  [_channel invokeMethod:@"onToken" arguments:fcmToken];
+}
+
+// [START ios_10_data_message] ??? enlace FCM Se sobreescribe si se declara method iOS native
+// Receive data messages on iOS 10+ directly from FCM (bypassing APNs) when the app is in the foreground.
+// To enable direct data messages, you can set [Messaging messaging].shouldEstablishDirectChannel to YES.
+- (void)messaging:(FIRMessaging *)messaging
+    didReceiveMessage:(FIRMessagingRemoteMessage *)remoteMessage {
+  [_channel invokeMethod:@"onMessage" arguments:remoteMessage.appData];
+}
+// [END ios_10_data_message]
 
 - (void) handleReplyActionWithResponse:(UNTextInputNotificationResponse *)response  API_AVAILABLE(ios(10.0)){    
     ChatworkService *chatService = [[ChatworkService alloc] init];
@@ -462,52 +495,6 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
         }
     }];
 }
-
-// [END ios_10_message_handling]
-
-- (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
-  NSLog(@"Unable to register for remote notifications: %@", error);
-}
-
-// Flutter requestNotificationPermissions() event ***
-- (void)application:(UIApplication *)application
-    didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
-#ifdef DEBUG
-  [[FIRMessaging messaging] setAPNSToken:deviceToken type:FIRMessagingAPNSTokenTypeSandbox];
-#else
-  [[FIRMessaging messaging] setAPNSToken:deviceToken type:FIRMessagingAPNSTokenTypeProd];
-#endif
-  [_channel invokeMethod:@"onToken" arguments:[FIRMessaging messaging].FCMToken];
-}
-
-// Flutter onIosSettingsRegistered() event ???
-// This will only be called for iOS < 10. For iOS >= 10, we make this call when we request
-// permissions.
-- (void)application:(UIApplication *)application
-    didRegisterUserNotificationSettings:(UIUserNotificationSettings *)notificationSettings {
-  NSDictionary *settingsDictionary = @{
-    @"sound" : [NSNumber numberWithBool:notificationSettings.types & UIUserNotificationTypeSound],
-    @"badge" : [NSNumber numberWithBool:notificationSettings.types & UIUserNotificationTypeBadge],
-    @"alert" : [NSNumber numberWithBool:notificationSettings.types & UIUserNotificationTypeAlert],
-    @"provisional" : [NSNumber numberWithBool:NO],
-  };
-  [_channel invokeMethod:@"onIosSettingsRegistered" arguments:settingsDictionary];
-}
-
-// Flutter onToken() event ***
-- (void)messaging:(nonnull FIRMessaging *)messaging
-    didReceiveRegistrationToken:(nonnull NSString *)fcmToken {
-  [_channel invokeMethod:@"onToken" arguments:fcmToken];
-}
-
-// [START ios_10_data_message] ??? enlace FCM Se sobreescribe si se declara method iOS native
-// Receive data messages on iOS 10+ directly from FCM (bypassing APNs) when the app is in the foreground.
-// To enable direct data messages, you can set [Messaging messaging].shouldEstablishDirectChannel to YES.
-- (void)messaging:(FIRMessaging *)messaging
-    didReceiveMessage:(FIRMessagingRemoteMessage *)remoteMessage {
-  [_channel invokeMethod:@"onMessage" arguments:remoteMessage.appData];
-}
-// [END ios_10_data_message]
 
 - (void) sendNotificationWithTitle:(NSString *_Nonnull)title body:(NSString *_Nonnull)body userId:(NSString *_Nonnull)userId channelId:(NSString *_Nonnull)channelId color:(NSString *_Nonnull)color userImage:(NSString *_Nonnull)userImage action:(NSString *_Nonnull)action fromId:(NSString *_Nonnull)fromId codPedido:(NSString *_Nonnull)codPedido description:(NSString *_Nonnull)description estadoPedido:(NSString *_Nonnull)estadoPedido valorPedido:(NSString *_Nonnull)valorPedido dataChat:(NSDictionary *_Nonnull)dataChat {
     MessagingService *msgService = [[MessagingService alloc] init];
