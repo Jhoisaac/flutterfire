@@ -13,10 +13,10 @@
 #import "MessagingService.h"
 #import "Constants.h"
 
-//#import <UserNotifications/UserNotifications.h>   flutter 1.10.2
+NSString *const kGCMMessageIDKey = @"gcm.message_id";
 
 #if defined(__IPHONE_10_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_10_0
-@interface FLTFirebaseMessagingPlugin () <FIRMessagingDelegate, UNUserNotificationCenterDelegate>
+@interface FLTFirebaseMessagingPlugin () <FIRMessagingDelegate>
 
 - (void) sendNotificationWithTitle:(NSString *_Nonnull)title body:(NSString *_Nonnull)body userId:(NSString *_Nonnull)userId channelId:(NSString *_Nonnull)channelId color:(NSString *_Nonnull)color userImage:(NSString *_Nonnull)userImage action:(NSString *_Nonnull)action fromId:(NSString *_Nonnull)fromId codPedido:(NSString *_Nonnull)codPedido description:(NSString *_Nonnull)description estadoPedido:(NSString *_Nonnull)estadoPedido valorPedido:(NSString *_Nonnull)valorPedido dataChat:(NSDictionary *_Nonnull)dataChat;
 
@@ -39,8 +39,6 @@ static NSObject<FlutterPluginRegistrar> *_registrar;
   NSDictionary *_launchNotification;
   BOOL _resumingFromBackground;
 }
-
-NSString *const kGCMMessageIDKey = @"gcm.message_id";
 
 NSString *const replyAction = @"REPLY_IDENTIFIER";
 NSString *const generalCategory = @"FLUTTER_NOTIFICATION_CLICK";
@@ -90,8 +88,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
   return self;
 }
 
-- (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
-    
+- (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {    
   NSString *method = call.method;
   if ([@"requestNotificationPermissions" isEqualToString:method]) {      
     NSDictionary *arguments = call.arguments;
@@ -133,9 +130,9 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
           requestAuthorizationWithOptions:authOptions
                         completionHandler:^(BOOL granted, NSError *_Nullable error) {
                           if (error) {
-                            NSLog( @"117 Push registration FAILED" );
-                            NSLog( @"118 ERROR: %@ - %@", error.localizedFailureReason, error.localizedDescription );
-                            NSLog( @"119 SUGGESTIONS: %@ - %@", error.localizedRecoveryOptions, error.localizedRecoverySuggestion );
+                            NSLog( @"133 Push registration FAILED" );
+                            NSLog( @"134 ERROR: %@ - %@", error.localizedFailureReason, error.localizedDescription );
+                            NSLog( @"135 SUGGESTIONS: %@ - %@", error.localizedRecoveryOptions, error.localizedRecoverySuggestion );
 
                             result(getFlutterError(error));
                             return;
@@ -144,8 +141,8 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
                           // [UIApplication:didRegisterUserNotificationSettings:notificationSettings]
                           // for ios < 10.
 
-                          NSLog(@"125 Permission granted: %d", granted);
-                          NSLog( @"126 Push registration success." );
+                          NSLog(@"144 Permission granted: %d", granted);
+                          NSLog( @"145 Push registration success." );
                           
                           UNNotificationAction* replyAct = [UNTextInputNotificationAction
                                                                 actionWithIdentifier: replyAction
@@ -214,7 +211,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
   } else if ([@"configure" isEqualToString:method]) {
     [FIRMessaging messaging].shouldEstablishDirectChannel = true;
     [[UIApplication sharedApplication] registerForRemoteNotifications];
-    if (_launchNotification != nil) {
+    if (_launchNotification != nil && _launchNotification[kGCMMessageIDKey]) {
       [_channel invokeMethod:@"onLaunch" arguments:_launchNotification];
     }
     result(nil);
@@ -264,10 +261,39 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 }
 
 #if defined(__IPHONE_10_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_10_0
-// Receive data message on iOS 10 devices while app is in the foreground.
+// Received data message on iOS 10 devices while app is in the foreground.
+// Only invoked if method swizzling is enabled.
 - (void)applicationReceivedRemoteMessage:(FIRMessagingRemoteMessage *)remoteMessage {
   [self didReceiveRemoteNotification:remoteMessage.appData];
 }
+
+// Received data message on iOS 10 devices while app is in the foreground.
+// Only invoked if method swizzling is disabled and UNUserNotificationCenterDelegate has been
+// registered in AppDelegate
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+       willPresentNotification:(UNNotification *)notification
+         withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler
+    NS_AVAILABLE_IOS(10.0) {
+  NSDictionary *userInfo = notification.request.content.userInfo;
+  // Check to key to ensure we only handle messages from Firebase
+  if (userInfo[kGCMMessageIDKey]) {
+    [[FIRMessaging messaging] appDidReceiveMessage:userInfo];
+    [_channel invokeMethod:@"onMessage" arguments:userInfo];
+    completionHandler(UNNotificationPresentationOptionNone);
+  }
+}
+
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+    didReceiveNotificationResponse:(UNNotificationResponse *)response
+             withCompletionHandler:(void (^)(void))completionHandler NS_AVAILABLE_IOS(10.0) {
+  NSDictionary *userInfo = response.notification.request.content.userInfo;
+  // Check to key to ensure we only handle messages from Firebase
+  if (userInfo[kGCMMessageIDKey]) {
+    [_channel invokeMethod:@"onResume" arguments:userInfo];
+    completionHandler();
+  }
+}
+
 #endif
 
 - (void)didReceiveRemoteNotification:(NSDictionary *)userInfo {
