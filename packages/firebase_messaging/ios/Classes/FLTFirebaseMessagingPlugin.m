@@ -62,7 +62,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
   }
 }
 
-- (instancetype)initWithChannel:(FlutterMethodChannel *)channel {    
+- (instancetype)initWithChannel:(FlutterMethodChannel *)channel {
   self = [super init];
 
   if (self) {
@@ -88,9 +88,9 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
   return self;
 }
 
-- (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {    
+- (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
   NSString *method = call.method;
-  if ([@"requestNotificationPermissions" isEqualToString:method]) {      
+  if ([@"requestNotificationPermissions" isEqualToString:method]) {
     NSDictionary *arguments = call.arguments;
     if (@available(iOS 10.0, *)) {
       /*UNAuthorizationOptions authOptions = UNAuthorizationOptionAlert | UNAuthorizationOptionSound | UNAuthorizationOptionBadge;*/
@@ -161,7 +161,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
                                                                 options:UNNotificationCategoryOptionCustomDismissAction];
 
                           /*[[UNUserNotificationCenter currentNotificationCenter]
-                            setNotificationCategories:[NSSet setWithObjects:generalCat, nil]];                      
+                            setNotificationCategories:[NSSet setWithObjects:generalCat, nil]];
                           result([NSNumber numberWithBool:granted]);*/
 
                           [[UNUserNotificationCenter currentNotificationCenter]
@@ -264,6 +264,8 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 // Received data message on iOS 10 devices while app is in the foreground.
 // Only invoked if method swizzling is enabled.
 - (void)applicationReceivedRemoteMessage:(FIRMessagingRemoteMessage *)remoteMessage {
+    NSLog(@"267 - (void)applicationReceivedRemoteMessage:(FIRMessagingRemoteMessage *)remoteMessage() executed!");
+    NSLog(@"Only invoked if method swizzling is enabled!!!");
   [self didReceiveRemoteNotification:remoteMessage.appData];
 }
 
@@ -276,7 +278,8 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
        willPresentNotification:(UNNotification *)notification
          withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler
     NS_AVAILABLE_IOS(10.0) {
-  // NSLog(@"360 userNotificationCenter:willPresentNotification::withCompletionHandler: executed!");
+    NSLog(@"281 - (void)userNotificationCenter:willPresentNotification::withCompletionHandler: executed!");
+    NSLog(@"282 Only invoked if method swizzling is disabled and UNUserNotificationCenterDelegate has been registered in AppDelegate");
 
   NSDictionary *userInfo = notification.request.content.userInfo;
 
@@ -313,6 +316,8 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
            didReceiveNotificationResponse:(UNTextInputNotificationResponse *)response
          withCompletionHandler:(void (^)(void))completionHandler  API_AVAILABLE(ios(10.0)) {
     //fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))completionHandler {
+    
+    NSLog(@"320 - (void)userNotificationCenter:didReceiveNotificationResponsewithCompletionHandler");
 
     if ([response.notification.request.content.categoryIdentifier isEqualToString:generalCategory]) {
         // Handle the actions for the expired timer.
@@ -330,7 +335,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     NSDictionary *userInfo = response.notification.request.content.userInfo;
     if (userInfo[kGCMMessageIDKey]) {
       [self didReceiveRemoteNotification:userInfo];
-      // Must be called when finished    
+      // Must be called when finished
       completionHandler();    //completionHandler(UIBackgroundFetchResultNoData);
     }
 }
@@ -338,6 +343,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 #endif
 
 - (void)didReceiveRemoteNotification:(NSDictionary *)userInfo {
+    NSLog(@"346 - (void)didReceiveRemoteNotification");
   if (_resumingFromBackground) {
     [_channel invokeMethod:@"onResume" arguments:userInfo];
   } else {
@@ -348,7 +354,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 #pragma mark - AppDelegate
 
 - (BOOL)application:(UIApplication *)application
-    didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {    
+    didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     /*UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"options" message:[launchOptions[UIApplicationLaunchOptionsLocalNotificationKey] description] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
     [alertView show];*/
     
@@ -384,6 +390,9 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 - (BOOL)application:(UIApplication *)application
     didReceiveRemoteNotification:(NSDictionary *)userInfo
           fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))completionHandler {
+    
+    NSLog(@"394 - (BOOL)application:didReceiveRemoteNotification:fetchCompletionHandler()");
+    NSLog(@"395 Event FCM se sobreescribe cuando se declara method native userNotificationCenter:didReceiveNotificationResponse");
     
   [self didReceiveRemoteNotification:userInfo];
   completionHandler(UIBackgroundFetchResultNoData);
@@ -430,11 +439,14 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 // To enable direct data messages, you can set [Messaging messaging].shouldEstablishDirectChannel to YES.
 - (void)messaging:(FIRMessaging *)messaging
     didReceiveMessage:(FIRMessagingRemoteMessage *)remoteMessage {
-  [_channel invokeMethod:@"onMessage" arguments:remoteMessage.appData];
+    NSLog(@"440 - (void)messaging:didReceiveMessage:(FIRMessagingRemoteMessage *)remoteMessage");
+    NSLog(@"enlace FCM Se sobreescribe si se declara method iOS native");
+    NSLog(@"Returning message data notification....");
+//  [_channel invokeMethod:@"onMessage" arguments:remoteMessage.appData];
 }
 // [END ios_10_data_message]
 
-- (void) handleReplyActionWithResponse:(UNTextInputNotificationResponse *)response  API_AVAILABLE(ios(10.0)){    
+- (void) handleReplyActionWithResponse:(UNTextInputNotificationResponse *)response  API_AVAILABLE(ios(10.0)){
     ChatworkService *chatService = [[ChatworkService alloc] init];
     
     NSDictionary *userInfo = response.notification.request.content.userInfo;
@@ -445,7 +457,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     [chatService saveMessageWithTextMessage:messageText andChannelId:channelId andCompletionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
         
-        if(httpResponse.statusCode == 201) {            
+        if(httpResponse.statusCode == 201) {
             NSError *parseError = nil;
             NSDictionary *responseDictionary = [NSJSONSerialization JSONObjectWithData:data options:0 error:&parseError];
             
@@ -517,7 +529,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
         
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
         
-        if(httpResponse.statusCode == 200) {            
+        if(httpResponse.statusCode == 200) {
             NSError *parseError = nil;
             NSDictionary *responseDictionary = [NSJSONSerialization JSONObjectWithData:data options:0 error:&parseError];
             NSLog(@"524 Android The response is - %@",responseDictionary);
@@ -568,3 +580,4 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 }
 
 @end
+
