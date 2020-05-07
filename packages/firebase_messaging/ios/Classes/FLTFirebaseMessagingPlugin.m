@@ -394,9 +394,39 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     NSLog(@"394 - (BOOL)application:didReceiveRemoteNotification:fetchCompletionHandler()");
     NSLog(@"395 Event FCM se sobreescribe cuando se declara method native userNotificationCenter:didReceiveNotificationResponse");
     
-  [self didReceiveRemoteNotification:userInfo];
-  completionHandler(UIBackgroundFetchResultNoData);
-  return YES;
+    NSLog(@"Message[action] es:  %@", userInfo[@"action"]);
+    
+    if(application.applicationState == UIApplicationStateInactive) {
+        NSLog(@"Inactive");
+
+        //Show the view with the content of the push
+        //completionHandler(UIBackgroundFetchResultNewData);
+
+    } else if (application.applicationState == UIApplicationStateBackground) {
+        NSLog(@"Background");
+
+        //Refresh the local model
+        //completionHandler(UIBackgroundFetchResultNewData);
+        if([userInfo[@"action"] isEqualToString:@"descartar_pedido"]
+           || [userInfo[@"action"] isEqualToString:@"descartar_pedido_cliente"]
+           || [userInfo[@"action"] isEqualToString:@"entregar_pedido"]
+           || [userInfo[@"action"] isEqualToString:@"recibir_pedido"]
+           || [userInfo[@"action"] isEqualToString:@"completar_pedido"]
+           || [userInfo[@"action"] isEqualToString:@"finalizar_pedido"]) {
+            
+            _resumingFromBackground = NO;
+        }
+
+    } else {
+        NSLog(@"Active");
+
+        //Show an in-app banner
+        //completionHandler(UIBackgroundFetchResultNewData);
+    }
+    
+    [self didReceiveRemoteNotification:userInfo];
+    completionHandler(UIBackgroundFetchResultNoData);
+    return YES;
 } // [END receive_message]
 
 // Flutter requestNotificationPermissions() event ***
