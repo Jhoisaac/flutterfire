@@ -448,6 +448,16 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     final Map<String, String> data = remoteMessage.getData();
+    final String actionNotify = data.get("action");
+
+    if(actionNotify.equals("descartar_pedido")
+            || actionNotify.equals("descartar_pedido_cliente")
+            || actionNotify.equals("entregar_pedido")
+            || actionNotify.equals("recibir_pedido")
+            || actionNotify.equals("completar_pedido")
+            || actionNotify.equals("finalizar_pedido")) {
+      return;
+    }
 
     JSONObject dataChat = null;
     String subtotalPed = "0.00";

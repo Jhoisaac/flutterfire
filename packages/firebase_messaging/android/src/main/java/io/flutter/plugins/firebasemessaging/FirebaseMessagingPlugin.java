@@ -5,6 +5,7 @@
 package io.flutter.plugins.firebasemessaging;
 
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -277,6 +278,11 @@ public class FirebaseMessagingPlugin extends BroadcastReceiver
                             result.error("unsubscribeFromTopic", e.getMessage(), null);
                             return;
                           }
+                          NotificationManager notificationManager =
+                                  (NotificationManager) registrar.activeContext().getSystemService(Context.NOTIFICATION_SERVICE);
+
+                          notificationManager.cancelAll();
+
                           result.success(null);
                         }
                       });
