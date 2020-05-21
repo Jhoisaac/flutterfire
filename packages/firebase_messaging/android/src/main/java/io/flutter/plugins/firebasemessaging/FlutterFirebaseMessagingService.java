@@ -493,7 +493,7 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
 
     PendingIntent approvePendingIntent = PendingIntent.getBroadcast(
             context,
-            REQUEST_CODE_APPROVE,
+            NotifyId,
             replyIntent,
             PendingIntent.FLAG_UPDATE_CURRENT
     );
