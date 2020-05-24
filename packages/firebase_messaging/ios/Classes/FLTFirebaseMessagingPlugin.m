@@ -387,7 +387,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 }
 
 // [START receive_message]  *** Event FCM se sobreescribe cuando se declara method native userNotificationCenter:didReceiveNotificationResponse
-- (BOOL)application:(UIApplication *)application
+/*- (BOOL)application:(UIApplication *)application
     didReceiveRemoteNotification:(NSDictionary *)userInfo
           fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))completionHandler {
     
@@ -428,7 +428,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     completionHandler(UIBackgroundFetchResultNoData);
     return YES;
 } // [END receive_message]
-
+*/
 // Flutter requestNotificationPermissions() event ***
 - (void)application:(UIApplication *)application
     didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
