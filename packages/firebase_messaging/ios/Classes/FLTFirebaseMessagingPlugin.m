@@ -491,8 +491,16 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
             NSError *parseError = nil;
             NSDictionary *responseDictionary = [NSJSONSerialization JSONObjectWithData:data options:0 error:&parseError];
             
+            NSData *pedidoData = [[responseDictionary objectForKey:@"pedido"] dataUsingEncoding:NSUTF8StringEncoding];
+            NSError *errorParsePedidoData = nil;
+            NSMutableDictionary *datosPedido = [NSJSONSerialization JSONObjectWithData:pedidoData options:0 error:&errorParsePedidoData];
+            
+            NSData *usuarioData = [[responseDictionary objectForKey:@"pedido"] dataUsingEncoding:NSUTF8StringEncoding];
+            NSError *errorParseUsuarioData = nil;
+            NSMutableDictionary *datosUsuario = [NSJSONSerialization JSONObjectWithData:usuarioData options:0 error:&errorParseUsuarioData];
+            
             NSInteger success = [[responseDictionary objectForKey:@"success"] integerValue];
-            NSLog(@"380 Android SUCCESS %d", success);
+            NSLog(@"495 chatService:saveMessage() SUCCESS %ld", success);
             
             NSString *userId = userInfo[@"from_id"];
             NSString *logoProveedor = userInfo[@"fcm_options"][@"image"];
@@ -506,6 +514,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
             NSString *idUser = [[responseDictionary objectForKey:@"idUser"] stringValue];
             NSString *fromId = [NSString stringWithFormat:@"%@-%@", tipoUser, idUser];
             NSString *userImage = [NSString stringWithFormat:@"https://%@/uploads/logosProveedor/%@", __SERVER_DOMAIN, [responseDictionary objectForKey:@"fotoLogo"]];
+            NSInteger messageId = [[responseDictionary objectForKey:@"messageId"] intValue];
             
             NSString *dataChat = userInfo[@"data_chat"];
             NSData *chatData = [dataChat dataUsingEncoding:NSUTF8StringEncoding];
@@ -530,7 +539,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
             
             NSString *color = [idUser isEqualToString:idProv] ? COLOR_CONSUMIDOR : COLOR_PROVEEDOR;
             
-            [self sendNotificationWithTitle:title body:messageText userId:userId channelId:channelId color:color userImage:userImage action:@"envio_chat" fromId:fromId codPedido:[NSString stringWithFormat:@"Pedido %@", [pedido objectForKey:@"codPedido"]] description:[pedido objectForKey:@"description"] estadoPedido:estadoPedido valorPedido:valorPedido dataChat:[self getDataChatWithChannelId:channelId messageText:messageText topicSenderId:idUser senderId:userId tipoUser:tipoUser pedido:pedido logoProveedor:logoProveedor foto:userImage currentPage:currentPage]];
+            [self sendNotificationWithTitle:title body:messageText userId:userId channelId:channelId color:color userImage:userImage action:@"envio_chat" fromId:fromId codPedido:[NSString stringWithFormat:@"Pedido %@", [pedido objectForKey:@"codPedido"]] description:[pedido objectForKey:@"description"] estadoPedido:estadoPedido valorPedido:valorPedido dataChat:[self getDataChatWithChannelId:channelId messageText:messageText topicSenderId:idUser senderId:userId tipoUser:tipoUser pedido:datosPedido logoProveedor:logoProveedor foto:userImage currentPage:currentPage usuario:datosUsuario messageId:&messageId]];
             
         } else {
             NSLog(@"Error es: %@", error);
@@ -571,118 +580,103 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     }];
 }
 
-- (NSDictionary *_Nonnull) getDataChatWithChannelId:(NSString *_Nonnull)channelId messageText:(NSString *_Nonnull)messageText topicSenderId:(NSString *_Nonnull)topicSenderId senderId:(NSString *_Nonnull)senderId tipoUser:(NSString *_Nonnull)tipoUser pedido:(NSDictionary *_Nonnull)pedido logoProveedor:(NSString *_Nonnull)logoProveedor foto:(NSString *_Nonnull)foto currentPage:(NSString *_Nonnull)currentPage {
+- (NSDictionary *_Nonnull) getDataChatWithChannelId:(NSString *_Nonnull)channelId messageText:(NSString *_Nonnull)messageText topicSenderId:(NSString *_Nonnull)topicSenderId senderId:(NSString *_Nonnull)senderId tipoUser:(NSString *_Nonnull)tipoUser pedido:(NSDictionary *_Nonnull)pedido logoProveedor:(NSString *_Nonnull)logoProveedor foto:(NSString *_Nonnull)foto currentPage:(NSString *_Nonnull)currentPage usuario:(NSDictionary *_Nonnull)usuario messageId:(NSInteger *_Nonnull)messageId {
+    
+    NSData *proveedorData = [[pedido objectForKey:@"proveedor"] dataUsingEncoding:NSUTF8StringEncoding];
+    NSError *errorParseProveedor = nil;
+    NSMutableDictionary *proveedor = [NSJSONSerialization JSONObjectWithData:proveedorData options:0 error:&errorParseProveedor];
+    
+    NSData *clienteData = [[pedido objectForKey:@"cliente"] dataUsingEncoding:NSUTF8StringEncoding];
+    NSError *errorParseCliente = nil;
+    NSMutableDictionary *cliente = [NSJSONSerialization JSONObjectWithData:clienteData options:0 error:&errorParseCliente];
+    
+    NSData *clienteProveedorData = [[pedido objectForKey:@"clienteProveedor"] dataUsingEncoding:NSUTF8StringEncoding];
+    NSError *errorParseClienteProveedor = nil;
+    NSMutableDictionary *clienteProveedor = [NSJSONSerialization JSONObjectWithData:clienteProveedorData options:0 error:&errorParseClienteProveedor];
+    
+    NSData *empresaData = clienteProveedor != nil ? [[clienteProveedor objectForKey:@"empresa"] dataUsingEncoding:NSUTF8StringEncoding] : nil;
+    NSError *errorParseEmpresa = nil;
+    NSMutableDictionary *empresa = empresaData != nil ? [NSJSONSerialization JSONObjectWithData:empresaData options:0 error:&errorParseEmpresa] : nil;
        
     NSDictionary * dataChat = @{
-        // @"idPedido": channelId,
-        // @"codPedido": [pedido objectForKey:@"codPedido"],
-        // @"descriPedido": [pedido objectForKey:@"descriPedido"],
-        // @"estadoPedido": [pedido objectForKey:@"estadoPedido"],
-        @"celular": @"celular",
-        @"propuesta": [pedido objectForKey:@"propuesta"],
-        @"representante": @"representante",
-        // @"requerimiento": [pedido objectForKey:@"requerimiento"],
-        @"subtotalPedido": [pedido objectForKey:@"subtotalPedido"],
-        @"idProv": [pedido objectForKey:@"idProv"],
-        @"logoProveedor": logoProveedor,
-        @"foto": foto,
-        @"tipoUsuario": tipoUser,
-        @"channel": channelId,
-        @"proveedor": @"proveedor",
-        @"senderId": senderId,
-        @"datePedi": [pedido objectForKey:@"datePedi"],
-        @"tipoChat": @"tipoChat",
-        @"message": messageText,
-        @"image": foto,
-        @"description": messageText,
-        @"tipoAdj": @"",
-        @"nombretoChat": [pedido objectForKey:@"nombre"],
-        @"topicSenderId": topicSenderId,
-        @"celulartoChat": [pedido objectForKey:@"celular"],
-        @"logoCliente": foto,
-        @"logoProv": logoProveedor,
-        @"currentPage": currentPage,
-        @"typeCliente": tipoUser,
-        @"typeNotify": @"Android",
-
         @"_id": channelId,
         @"idPediProveedor": [pedido objectForKey:@"codPedido"],
         @"descriPedido": [pedido objectForKey:@"descriPedido"],
         @"estadoPedido": [pedido objectForKey:@"estadoPedido"],
-        @"subtotalPedido": [pedido objectForKey:@"subtotalPedido"],
+        @"subtotalPedido": [pedido objectForKey:@"subTotal"],
         @"pathRequer": [pedido objectForKey:@"requerimiento"],
-        @"estadoPedidoCliente": @"estadoPedidoCliente",
-        @"createAt": widget.appBarData['date'],
-        @"pathPropuesta": adjFileSend,
-        @"tipoUser": widget.initChat['tipoUser'],
-        @"topicSenderId": widget.currentUser['currentId'],
-        @"isOferta": widget.initChat['isOferta'],
-        @"imagenPublicacion": widget.initChat['imagenPublicacion'],
+        @"estadoPedidoCliente": [pedido objectForKey:@"estadoPedidoCliente"],
+        @"createAt": [pedido objectForKey:@"date"],
+        @"pathPropuesta": [pedido objectForKey:@"propuesta"],
+        @"tipoUser": [pedido objectForKey:@"tipoUser"],
+        @"topicSenderId": [usuario objectForKey:@"id"],
+        @"isOferta": [pedido objectForKey:@"isOferta"],
+        @"imagenPublicacion": [pedido objectForKey:@"imagenPublicacion"],
 
-        @"indexO":0,
+        @"indexO": @0,
 
-        @"idProveedor":widget.chatData['provId'],
-        @"nombreProveedor":widget.initChat['nombreProveedor'],
-        @"apellidoProveedor":widget.initChat['apellidoProveedor'],
-        @"apiLogoProveedor":widget.initChat['logoprove'],
-        @"celularProveedor":widget.appBarActions['call'],
-        @"nombreEmpresaProveedor":widget.initChat['nombreEmpresaProveedor'],
-        @"ubicacionProveedor":widget.initChat['ubicacionProveedor'],
-        @"actividadEconomicaProveedor":widget.currentUser['currentUserType'] == 'proveedor' && widget.currentPage=='misVentas' ? widget.currentUser['currentActividadEconomica'] : '',
-        @"paisProveedor":widget.currentUser['currentUserType'] == 'proveedor' && widget.currentPage=='misVentas' ? widget.currentUser['currentPais'] : '',
-        @"ciudadProveedor":widget.currentUser['currentUserType'] == 'proveedor' && widget.currentPage=='misVentas' ? widget.currentUser['currentCiudad'] : '',
+        @"idProveedor": [proveedor objectForKey:@"id"],
+        @"nombreProveedor": [proveedor objectForKey:@"nombreProveedor"],
+        @"apellidoProveedor": [proveedor objectForKey:@"apellidoProveedor"],
+        @"apiLogoProveedor": [proveedor objectForKey:@"api_logo"],
+        @"celularProveedor": [proveedor objectForKey:@"celular"],
+        @"nombreEmpresaProveedor": [proveedor objectForKey:@"nombre_empresa"],
+        @"ubicacionProveedor": [proveedor objectForKey:@"ubicacion"],
+        @"actividadEconomicaProveedor": [proveedor objectForKey:@"actividadEconomicaProveedor"],
+        @"paisProveedor": [proveedor objectForKey:@"paisProveedor"],
+        @"ciudadProveedor": [proveedor objectForKey:@"ciudadProveedor"],
 
-        @"idCliente": widget.appBarData['typeCliente']=='personal' ? widget.initChat['idCliente'] : null,
-        @"nombreCliente": widget.appBarData['typeCliente']=='personal' ? widget.initChat['nombreCliente'] : null,
-        @"apellidoCliente": widget.appBarData['typeCliente']=='personal' ? widget.initChat['apellidoCliente'] : null,
-        @"apiLogoCliente": widget.appBarData['typeCliente']=='personal' ? widget.initChat['logocliente'] : null,
-        @"celularCliente": widget.appBarData['typeCliente']=='personal' ? widget.initChat['celularCliente'] : null,
+        @"idCliente": cliente != nil ? [cliente objectForKey:@"id"] : nil,
+        @"nombreCliente": cliente != nil ? [cliente objectForKey:@"nombre"] : nil,
+        @"apellidoCliente": cliente != nil ? [cliente objectForKey:@"apellido"] : nil,
+        @"apiLogoCliente": cliente != nil ? [cliente objectForKey:@"api_logo"] : nil,
+        @"celularCliente": cliente != nil ? [cliente objectForKey:@"celular"] : nil,
 
-        @"idClienteProveedor": widget.appBarData['typeCliente'] != 'personal' ? widget.initChat['idCliente'] : null,
-        @"nombreClienteProveedor": widget.appBarData['typeCliente'] != 'personal' ? widget.initChat['nombreCliente'] : null,
-        @"apellidoClienteProveedor": widget.appBarData['typeCliente'] != 'personal' ? widget.initChat['apellidoCliente'] : null,
-        @"apiLogoClienteProveedor": widget.appBarData['typeCliente'] != 'personal' ? widget.initChat['logocliente'] : null,
-        @"celularClienteProveedor": widget.appBarData['typeCliente'] != 'personal' ? widget.initChat['celularCliente'] : null,
-        @"nombreEmpresaClienteProveedor": widget.appBarData['typeCliente'] != 'personal' ? widget.initChat['nombreEmpresaCliente'] : null,
-        @"ubicacionClienteProveedor": widget.appBarData['typeCliente'] != 'personal' ? widget.initChat['ubicacionCliente'] : null,
+        @"idClienteProveedor": clienteProveedor != nil ? [clienteProveedor objectForKey:@"id"] : nil,
+        @"nombreClienteProveedor": clienteProveedor != nil ? [clienteProveedor objectForKey:@"nombreProveedor"] : nil,
+        @"apellidoClienteProveedor": clienteProveedor != nil ? [clienteProveedor objectForKey:@"apellidoProveedor"] : nil,
+        @"apiLogoClienteProveedor": clienteProveedor != nil ? [empresa objectForKey:@"api_logo"] : nil,
+        @"celularClienteProveedor": clienteProveedor != nil ? [clienteProveedor objectForKey:@"celularProveedor"] : nil,
+        @"nombreEmpresaClienteProveedor": clienteProveedor != nil ? [empresa objectForKey:@"nombre"] : nil,
+        @"ubicacionClienteProveedor": clienteProveedor != nil ? [clienteProveedor objectForKey:@"ubicacion"] : nil,
 
-        @"messageId": uuid.v1(),
-        @"channel": widget.chatData['channel'],
-        @"asunto": "chatwork",
-        @"senderId": localSenderId,
-        @"command": "message",
-        @"category": "",
-        @"message": msgSendList[1], //textSended,
-        @"type": msgSendList[0],
-        @"createAtChat": createdAt.toString(),
-        @"height": msgSendList[0] == 'text' ? 0 : msgSendList[4],
-        @"width": msgSendList[0] == 'text' ? 0 : msgSendList[5],
-        @"isLandScape": msgSendList[2],
+        @"messageId": [NSNumber numberWithInteger:*messageId],
+        @"channel": channelId,
+        @"asunto": @"chatwork",
+        @"senderId": senderId,
+        @"command": @"message",
+        @"category": @"",
+        @"message": messageText,
+        @"type": @"text",
+        @"createAtChat": @"createAtChat",
+        @"width":@"width",
+        @"height": @"height",
 
-        @"celular": widget.appBarActions['call'],
-        @"representante": widget.chatData['provRepresentative'],
-        @"idProv": widget.chatData['provId'],
-        @"logoProveedor": logoProveedor,
+        @"celular": [pedido objectForKey:@"celular"],
+        @"representante": [proveedor objectForKey:@"nombre_proveedor"],
+        @"idProv": [proveedor objectForKey:@"id"],
+        @"logoProveedor": [proveedor objectForKey:@"api_logo"],
         @"foto": foto,
-        @"tipoChat": isProvCons,
-        @"navbarClnts": true,
-        @"logoProv":widget.initChat['logoprove'],
-        @"celulartoChat":widget.currentUser['currentCelular'],
-        @"nombretoChat":widget.currentUser['currentNombre']+' '+widget.currentUser['currentApellido'],
+        @"tipoChat": @true,
+        @"navbarClnts": @true,
+        @"logoProv": logoProveedor,
+        @"celulartoChat": [usuario objectForKey:@"celular"],
+        @"nombretoChat": [usuario objectForKey:@"nombre_consumidor"],
+        @"logoProv": @"",
 
         @"image": foto,
-        @"description": messageSended, //textSended,
+        @"description": messageText,
         @"currentPage": currentPage,
         @"typeCliente": tipoUser,
-        @"notificationColor":widget.currentUser['currentUserType']=='proveedor' && widget.chatData['provId']==widget.currentUser['currentId']?'azul':'verde',
+        @"notificationColor": [pedido objectForKey:@"color"],
 
-        @"tipoUserItem": "js-clnts-pers",
-        @"nombreUserItem": "SCOTH WILIAMS",
-        @"chatMsgNegoTipoUser": "proveedor",
-        @"chatMsgNegoEvento": "ProveedorConsumidor",
-        @"chatMsgNegoFrom": "#js-add-chat",
-        @"usuario": "proveedor",
-        @"toastrPos": "toast-top-right",
+        @"tipoUserItem": @"js-clnts-pers",
+        @"nombreUserItem": @"SCOTH WILIAMS",
+        @"chatMsgNegoTipoUser": @"proveedor",
+        @"chatMsgNegoEvento": @"ProveedorConsumidor",
+        @"chatMsgNegoFrom": @"#js-add-chat",
+        @"usuario": @"proveedor",
+        @"toastrPos": @"toast-top-right",
     };
     
     return dataChat;
