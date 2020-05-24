@@ -268,78 +268,6 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     NSLog(@"Only invoked if method swizzling is enabled!!!");
   [self didReceiveRemoteNotification:remoteMessage.appData];
 }
-
-// [START ios_10_message_handling]
-// Receive displayed notifications for iOS 10 devices.
-// Received data message on iOS 10 devices while app is in the foreground.
-// Only invoked if method swizzling is disabled and UNUserNotificationCenterDelegate has been
-// registered in AppDelegate
-- (void)userNotificationCenter:(UNUserNotificationCenter *)center
-       willPresentNotification:(UNNotification *)notification
-         withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler
-    NS_AVAILABLE_IOS(10.0) {
-    NSLog(@"281 - (void)userNotificationCenter:willPresentNotification::withCompletionHandler: executed!");
-    NSLog(@"282 Only invoked if method swizzling is disabled and UNUserNotificationCenterDelegate has been registered in AppDelegate");
-
-  NSDictionary *userInfo = notification.request.content.userInfo;
-
-  // Print full message.
-  // NSLog(@"userInfo es: %@", userInfo);
-
-  // Print message ID.
-  // NSLog(@"Message ID: %@", userInfo[kGCMMessageIDKey]);
-
-  // Check to key to ensure we only handle messages from Firebase
-  if (userInfo[kGCMMessageIDKey]) {
-    // With swizzling disabled you must let Messaging know about the message, for Analytics
-    [[FIRMessaging messaging] appDidReceiveMessage:userInfo];
-    [_channel invokeMethod:@"onMessage" arguments:userInfo];
-    // Change this to your preferred presentation option  -- UNNotificationPresentationOptionAlert
-    completionHandler(UNNotificationPresentationOptionNone);
-  }
-}
-
-/* Override method Tap notification
-- (void)userNotificationCenter:(UNUserNotificationCenter *)center
-    didReceiveNotificationResponse:(UNNotificationResponse *)response
-             withCompletionHandler:(void (^)(void))completionHandler NS_AVAILABLE_IOS(10.0) {
-  NSDictionary *userInfo = response.notification.request.content.userInfo;
-  // Check to key to ensure we only handle messages from Firebase
-  if (userInfo[kGCMMessageIDKey]) {
-    [_channel invokeMethod:@"onResume" arguments:userInfo];
-    completionHandler();
-  }
-}*/
-
-// Handle notification messages after display notification is tapped by the user.
-- (void)userNotificationCenter:(UNUserNotificationCenter *)center
-           didReceiveNotificationResponse:(UNTextInputNotificationResponse *)response
-         withCompletionHandler:(void (^)(void))completionHandler  API_AVAILABLE(ios(10.0)) {
-    //fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))completionHandler {
-    
-    NSLog(@"320 - (void)userNotificationCenter:didReceiveNotificationResponsewithCompletionHandler");
-
-    if ([response.notification.request.content.categoryIdentifier isEqualToString:generalCategory]) {
-        // Handle the actions for the expired timer.
-        if ([response.actionIdentifier isEqualToString:replyAction]) {
-            //NSLog(@"319 Button responder pressed! :)");
-            //NSLog(@"320 response.userText es: %@", response.userText);
-            
-            [self handleReplyActionWithResponse:response];
-
-        } /*else if ([response.actionIdentifier isEqualToString:@"APPROVE_ACTION"]) {
-            NSLog(@"325 Button aprobar pressed! :)");
-        }*/
-    }
-    
-    NSDictionary *userInfo = response.notification.request.content.userInfo;
-    if (userInfo[kGCMMessageIDKey]) {
-      [self didReceiveRemoteNotification:userInfo];
-      // Must be called when finished
-      completionHandler();    //completionHandler(UIBackgroundFetchResultNoData);
-    }
-}
-
 #endif
 
 - (void)didReceiveRemoteNotification:(NSDictionary *)userInfo {
@@ -429,6 +357,78 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     return YES;
 } // [END receive_message]
 */
+
+// [START ios_10_message_handling]
+// Receive displayed notifications for iOS 10 devices.
+// Received data message on iOS 10 devices while app is in the foreground.
+// Only invoked if method swizzling is disabled and UNUserNotificationCenterDelegate has been
+// registered in AppDelegate
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+       willPresentNotification:(UNNotification *)notification
+         withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler
+    NS_AVAILABLE_IOS(10.0) {
+    NSLog(@"281 - (void)userNotificationCenter:willPresentNotification::withCompletionHandler: executed!");
+    NSLog(@"282 Only invoked if method swizzling is disabled and UNUserNotificationCenterDelegate has been registered in AppDelegate");
+
+  NSDictionary *userInfo = notification.request.content.userInfo;
+
+  // Print full message.
+  // NSLog(@"userInfo es: %@", userInfo);
+
+  // Print message ID.
+  // NSLog(@"Message ID: %@", userInfo[kGCMMessageIDKey]);
+
+  // Check to key to ensure we only handle messages from Firebase
+  if (userInfo[kGCMMessageIDKey]) {
+    // With swizzling disabled you must let Messaging know about the message, for Analytics
+    [[FIRMessaging messaging] appDidReceiveMessage:userInfo];
+    [_channel invokeMethod:@"onMessage" arguments:userInfo];
+    // Change this to your preferred presentation option  -- UNNotificationPresentationOptionAlert
+    completionHandler(UNNotificationPresentationOptionNone);
+  }
+}
+
+/* Override method Tap notification
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+    didReceiveNotificationResponse:(UNNotificationResponse *)response
+             withCompletionHandler:(void (^)(void))completionHandler NS_AVAILABLE_IOS(10.0) {
+  NSDictionary *userInfo = response.notification.request.content.userInfo;
+  // Check to key to ensure we only handle messages from Firebase
+  if (userInfo[kGCMMessageIDKey]) {
+    [_channel invokeMethod:@"onResume" arguments:userInfo];
+    completionHandler();
+  }
+}*/
+
+// Handle notification messages after display notification is tapped by the user.
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+           didReceiveNotificationResponse:(UNTextInputNotificationResponse *)response
+         withCompletionHandler:(void (^)(void))completionHandler  API_AVAILABLE(ios(10.0)) {
+    //fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))completionHandler {
+    
+    NSLog(@"320 - (void)userNotificationCenter:didReceiveNotificationResponsewithCompletionHandler");
+
+    if ([response.notification.request.content.categoryIdentifier isEqualToString:generalCategory]) {
+        // Handle the actions for the expired timer.
+        if ([response.actionIdentifier isEqualToString:replyAction]) {
+            //NSLog(@"319 Button responder pressed! :)");
+            //NSLog(@"320 response.userText es: %@", response.userText);
+            
+            [self handleReplyActionWithResponse:response];
+
+        } /*else if ([response.actionIdentifier isEqualToString:@"APPROVE_ACTION"]) {
+            NSLog(@"325 Button aprobar pressed! :)");
+        }*/
+    }
+    
+    NSDictionary *userInfo = response.notification.request.content.userInfo;
+    if (userInfo[kGCMMessageIDKey]) {
+      [self didReceiveRemoteNotification:userInfo];
+      // Must be called when finished
+      completionHandler();    //completionHandler(UIBackgroundFetchResultNoData);
+    }
+}
+
 // Flutter requestNotificationPermissions() event ***
 - (void)application:(UIApplication *)application
     didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
@@ -477,6 +477,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 // [END ios_10_data_message]
 
 - (void) handleReplyActionWithResponse:(UNTextInputNotificationResponse *)response  API_AVAILABLE(ios(10.0)){
+    NSLog(@"480handleReplyActionWithResponse()");
     ChatworkService *chatService = [[ChatworkService alloc] init];
     
     NSDictionary *userInfo = response.notification.request.content.userInfo;
@@ -500,7 +501,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
             NSMutableDictionary *datosUsuario = [NSJSONSerialization JSONObjectWithData:usuarioData options:0 error:&errorParseUsuarioData];
             
             NSInteger success = [[responseDictionary objectForKey:@"success"] integerValue];
-            NSLog(@"495 chatService:saveMessage() SUCCESS %ld", success);
+            NSLog(@"503 chatService:saveMessage() SUCCESS %ld", success);
             
             NSString *userId = userInfo[@"from_id"];
             NSString *logoProveedor = userInfo[@"fcm_options"][@"image"];
@@ -538,6 +539,9 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
             NSString *idProv = [pedido objectForKey:@"idProv"];
             
             NSString *color = [idUser isEqualToString:idProv] ? COLOR_CONSUMIDOR : COLOR_PROVEEDOR;
+            
+            NSLog(@"userId es: %@", userId);
+            NSLog(@"fromId es: %@", fromId);
             
             [self sendNotificationWithTitle:title body:messageText userId:userId channelId:channelId color:color userImage:userImage action:@"envio_chat" fromId:fromId codPedido:[NSString stringWithFormat:@"Pedido %@", [pedido objectForKey:@"codPedido"]] description:[pedido objectForKey:@"description"] estadoPedido:estadoPedido valorPedido:valorPedido dataChat:[self getDataChatWithChannelId:channelId messageText:messageText topicSenderId:idUser senderId:userId tipoUser:tipoUser pedido:datosPedido logoProveedor:logoProveedor foto:userImage currentPage:currentPage usuario:datosUsuario messageId:&messageId]];
             
