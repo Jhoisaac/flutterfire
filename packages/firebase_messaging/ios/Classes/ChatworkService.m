@@ -23,8 +23,12 @@ NSString *const SHARED_PREFERENCES_NAME = @"FlutterSharedPreferences";
 
 - (int) saveMessageWithTextMessage:(NSString *)textMessage andChannelId:(NSString *)channelId andCompletionHandler:(void (^_Nonnull)(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error))completionHandler {
     AmzwkHttpUtil *networkHelper = [[AmzwkHttpUtil alloc] initWithUrl: [NSString stringWithFormat: @"%@/%@/%@", __CHAT_API_DOMAIN, channelId, @"message/save"]];
-        
-    NSString *bodyParams =[NSString stringWithFormat:@"message=%@", textMessage];
+    
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setDateStyle:NSDateFormatterFullStyle];
+    [dateFormatter setTimeStyle:NSDateFormatterFullStyle];
+    
+    NSString *bodyParams =[NSString stringWithFormat:@"message=%@/type=%@/createAt=%@", textMessage, @"text", [dateFormatter stringFromDate:[NSDate date]]];
     //Convert the String to Data
     NSData *dataParams = [bodyParams dataUsingEncoding:NSUTF8StringEncoding];
     
