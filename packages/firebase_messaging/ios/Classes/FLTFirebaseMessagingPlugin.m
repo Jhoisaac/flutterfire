@@ -18,7 +18,7 @@ NSString *const kGCMMessageIDKey = @"gcm.message_id";
 #if defined(__IPHONE_10_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_10_0
 @interface FLTFirebaseMessagingPlugin () <FIRMessagingDelegate, UNUserNotificationCenterDelegate>
 
-- (void) sendNotificationWithTitle:(NSString *_Nonnull)title body:(NSString *_Nonnull)body userId:(NSString *_Nonnull)userId channelId:(NSString *_Nonnull)channelId color:(NSString *_Nonnull)color userImage:(NSString *_Nonnull)userImage action:(NSString *_Nonnull)action fromId:(NSString *_Nonnull)fromId codPedido:(NSString *_Nonnull)codPedido description:(NSString *_Nonnull)description estadoPedido:(NSString *_Nonnull)estadoPedido valorPedido:(NSString *_Nonnull)valorPedido dataChat:(NSDictionary *_Nonnull)dataChat;
+- (void) sendNotificationWithTitle:(NSString *_Nonnull)title body:(NSString *_Nonnull)body userId:(NSString *_Nonnull)userId channelId:(NSString *_Nonnull)channelId color:(NSString *_Nonnull)color userImage:(NSString *_Nonnull)userImage action:(NSString *_Nonnull)action fromId:(NSString *_Nonnull)fromId codPedido:(NSString *_Nonnull)codPedido description:(NSString *_Nonnull)description estadoPedido:(NSString *_Nonnull)estadoPedido valorPedido:(NSString *_Nonnull)valorPedido dataChat:(NSDictionary *_Nonnull)dataChat completionHandler:(void (^)(void))completionHandler;
 
 - (NSDictionary *_Nonnull) getDataChatWithChannelId:(NSString *_Nonnull)channelId messageText:(NSString *_Nonnull)messageText topicSenderId:(NSString *_Nonnull)topicSenderId senderId:(NSString *_Nonnull)senderId tipoUser:(NSString *_Nonnull)tipoUser pedido:(NSDictionary *_Nonnull)pedido logoProveedor:(NSString *_Nonnull)logoProveedor foto:(NSString *_Nonnull)foto currentPage:(NSString *_Nonnull)currentPage usuario:(NSDictionary *_Nonnull)usuario messageId:(NSInteger *_Nonnull)messageId;
 
@@ -406,21 +406,21 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
          withCompletionHandler:(void (^)(void))completionHandler  API_AVAILABLE(ios(10.0)) {
     //fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))completionHandler {
     
-    NSLog(@"320 - (void)userNotificationCenter:didReceiveNotificationResponsewithCompletionHandler");
+    NSLog(@"409 - (void)userNotificationCenter:didReceiveNotificationResponsewithCompletionHandler");
 
     if ([response.notification.request.content.categoryIdentifier isEqualToString:generalCategory]) {
         // Handle the actions for the expired timer.
         if ([response.actionIdentifier isEqualToString:replyAction]) {
-            //NSLog(@"319 Button responder pressed! :)");
-            //NSLog(@"320 response.userText es: %@", response.userText);
+            /*NSLog(@"414 Button responder pressed! :)");*/
+            /*NSLog(@"415 response.userText es: %@", response.userText);*/
             
-            [self handleReplyActionWithResponse:response];
+            [self handleReplyActionWithResponse:response withCompletionHandler:completionHandler];
+            /*completionHandler();*/
+            return;
 
         } /*else if ([response.actionIdentifier isEqualToString:@"APPROVE_ACTION"]) {
             NSLog(@"325 Button aprobar pressed! :)");
         }*/
-        completionHandler(); 
-        return; 
     }
     
     NSDictionary *userInfo = response.notification.request.content.userInfo;
@@ -478,8 +478,8 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 }
 // [END ios_10_data_message]
 
-- (void) handleReplyActionWithResponse:(UNTextInputNotificationResponse *)response  API_AVAILABLE(ios(10.0)){
-    NSLog(@"480handleReplyActionWithResponse()");
+- (void) handleReplyActionWithResponse:(UNTextInputNotificationResponse *)response withCompletionHandler:(void (^)(void))completionHandler API_AVAILABLE(ios(10.0)){
+    /*NSLog(@"482 handleReplyActionWithResponse()");*/
     ChatworkService *chatService = [[ChatworkService alloc] init];
     
     NSDictionary *userInfo = response.notification.request.content.userInfo;
@@ -489,7 +489,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     
     [chatService saveMessageWithTextMessage:messageText andChannelId:channelId andCompletionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-        NSLog(@"498 chatService:saveMessage() httpResponse.statusCode es:  %ld", httpResponse.statusCode);
+        /*NSLog(@"492 chatService:saveMessage() httpResponse.statusCode es:  %ld", httpResponse.statusCode);*/
         
         if(httpResponse.statusCode == 201) {
             NSError *parseError = nil;
@@ -542,7 +542,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
             /*NSLog(@"userId es: %@", userId);*/
             /*NSLog(@"fromId es: %@", fromId);*/
             
-            [self sendNotificationWithTitle:title body:messageText userId:userId channelId:channelId color:color userImage:userImage action:@"envio_chat" fromId:fromId codPedido:[NSString stringWithFormat:@"Pedido %@", [datosPedido objectForKey:@"codPedido"]] description:[datosPedido objectForKey:@"descriPedido"] estadoPedido:estadoPedido valorPedido:valorPedido dataChat:[self getDataChatWithChannelId:channelId messageText:messageText topicSenderId:idUser senderId:userId tipoUser:tipoUser pedido:datosPedido logoProveedor:logoProveedor foto:userImage currentPage:currentPage usuario:datosUsuario messageId:&messageId]];
+            [self sendNotificationWithTitle:title body:messageText userId:userId channelId:channelId color:color userImage:userImage action:@"envio_chat" fromId:fromId codPedido:[NSString stringWithFormat:@"Pedido %@", [datosPedido objectForKey:@"codPedido"]] description:[datosPedido objectForKey:@"descriPedido"] estadoPedido:estadoPedido valorPedido:valorPedido dataChat:[self getDataChatWithChannelId:channelId messageText:messageText topicSenderId:idUser senderId:userId tipoUser:tipoUser pedido:datosPedido logoProveedor:logoProveedor foto:userImage currentPage:currentPage usuario:datosUsuario messageId:&messageId] completionHandler:completionHandler];
             
         } else {
             NSLog(@"Error es: %@", error);
@@ -550,7 +550,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     }];
 }
 
-- (void) sendNotificationWithTitle:(NSString *_Nonnull)title body:(NSString *_Nonnull)body userId:(NSString *_Nonnull)userId channelId:(NSString *_Nonnull)channelId color:(NSString *_Nonnull)color userImage:(NSString *_Nonnull)userImage action:(NSString *_Nonnull)action fromId:(NSString *_Nonnull)fromId codPedido:(NSString *_Nonnull)codPedido description:(NSString *_Nonnull)description estadoPedido:(NSString *_Nonnull)estadoPedido valorPedido:(NSString *_Nonnull)valorPedido dataChat:(NSDictionary *_Nonnull)dataChat {
+- (void) sendNotificationWithTitle:(NSString *_Nonnull)title body:(NSString *_Nonnull)body userId:(NSString *_Nonnull)userId channelId:(NSString *_Nonnull)channelId color:(NSString *_Nonnull)color userImage:(NSString *_Nonnull)userImage action:(NSString *_Nonnull)action fromId:(NSString *_Nonnull)fromId codPedido:(NSString *_Nonnull)codPedido description:(NSString *_Nonnull)description estadoPedido:(NSString *_Nonnull)estadoPedido valorPedido:(NSString *_Nonnull)valorPedido dataChat:(NSDictionary *_Nonnull)dataChat completionHandler:(void (^)(void))completionHandler {
     MessagingService *msgService = [[MessagingService alloc] init];
     
     [msgService
@@ -570,18 +570,20 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
      andCompletionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-        NSLog(@"Android httpResponse.statusCode es: %ld", httpResponse.statusCode);
+        /*NSLog(@"Android httpResponse.statusCode es: %ld", httpResponse.statusCode);*/
         
         if(httpResponse.statusCode == 200) {
             NSError *parseError = nil;
             NSDictionary *responseDictionary = [NSJSONSerialization JSONObjectWithData:data options:0 error:&parseError];
             NSLog(@"524 Android The response is - %@",responseDictionary);
+            completionHandler();
             
         } else {
             NSError *parseError = nil;
             NSDictionary *responseDictionary = [NSJSONSerialization JSONObjectWithData:data options:0 error:&parseError];
             NSLog(@"593 Android responseDictionary es: %@", responseDictionary);
             NSLog(@"594 Android Error es: %@", error);
+            completionHandler();
         }
     }];
 }
@@ -593,13 +595,13 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     
     NSMutableDictionary *cliente = [pedido objectForKey:@"cliente"];
     /*NSLog(@"cliente es: %@", cliente);*/
-    NSLog(@"cliente == NULL es: %d", cliente == [ NSNull null ]);
-    NSLog(@"cliente != NULL es: %d", cliente != [ NSNull null ]);
+    /*NSLog(@"cliente == NULL es: %d", cliente == [ NSNull null ]);
+    NSLog(@"cliente != NULL es: %d", cliente != [ NSNull null ]);*/
     
     NSMutableDictionary *clienteProveedor = [pedido objectForKey:@"clienteProveedor"];
     /*NSLog(@"clienteProveedor es: %@", clienteProveedor);*/
-    NSLog(@"clienteProveedor == NULL es: %d", clienteProveedor == [ NSNull null ]);
-    NSLog(@"clienteProveedor != NULL es: %d", clienteProveedor != [ NSNull null ]);
+    /*NSLog(@"clienteProveedor == NULL es: %d", clienteProveedor == [ NSNull null ]);
+    NSLog(@"clienteProveedor != NULL es: %d", clienteProveedor != [ NSNull null ]);*/
     
     NSMutableDictionary *empresa = clienteProveedor != [ NSNull null ] ? [clienteProveedor objectForKey:@"empresa"] : [ NSNull null ];
     /*NSLog(@"empresa es: %@", empresa);*/
