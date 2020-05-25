@@ -419,6 +419,8 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
         } /*else if ([response.actionIdentifier isEqualToString:@"APPROVE_ACTION"]) {
             NSLog(@"325 Button aprobar pressed! :)");
         }*/
+        completionHandler();
+        return;
     }
     
     NSDictionary *userInfo = response.notification.request.content.userInfo;
@@ -487,21 +489,18 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     
     [chatService saveMessageWithTextMessage:messageText andChannelId:channelId andCompletionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+        NSLog(@"498 chatService:saveMessage() httpResponse.statusCode es:  %ld", httpResponse.statusCode);
         
         if(httpResponse.statusCode == 201) {
             NSError *parseError = nil;
             NSDictionary *responseDictionary = [NSJSONSerialization JSONObjectWithData:data options:0 error:&parseError];
+            /*NSLog(@"responseDictionary es: %@",responseDictionary);*/
             
-            NSData *pedidoData = [[responseDictionary objectForKey:@"pedido"] dataUsingEncoding:NSUTF8StringEncoding];
-            NSError *errorParsePedidoData = nil;
-            NSMutableDictionary *datosPedido = [NSJSONSerialization JSONObjectWithData:pedidoData options:0 error:&errorParsePedidoData];
+            NSMutableDictionary *datosPedido = [responseDictionary objectForKey:@"pedido"];
+            /*NSLog(@"datosPedido es: %@",datosPedido);*/
             
-            NSData *usuarioData = [[responseDictionary objectForKey:@"pedido"] dataUsingEncoding:NSUTF8StringEncoding];
-            NSError *errorParseUsuarioData = nil;
-            NSMutableDictionary *datosUsuario = [NSJSONSerialization JSONObjectWithData:usuarioData options:0 error:&errorParseUsuarioData];
-            
-            NSInteger success = [[responseDictionary objectForKey:@"success"] integerValue];
-            NSLog(@"503 chatService:saveMessage() SUCCESS %ld", success);
+            NSMutableDictionary *datosUsuario = [responseDictionary objectForKey:@"datosusuario"];
+            /*NSLog(@"datosUsuario es: %@",datosUsuario);*/
             
             NSString *userId = userInfo[@"from_id"];
             NSString *logoProveedor = userInfo[@"fcm_options"][@"image"];
@@ -540,10 +539,10 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
             
             NSString *color = [idUser isEqualToString:idProv] ? COLOR_CONSUMIDOR : COLOR_PROVEEDOR;
             
-            NSLog(@"userId es: %@", userId);
-            NSLog(@"fromId es: %@", fromId);
+            /*NSLog(@"userId es: %@", userId);*/
+            /*NSLog(@"fromId es: %@", fromId);*/
             
-            [self sendNotificationWithTitle:title body:messageText userId:userId channelId:channelId color:color userImage:userImage action:@"envio_chat" fromId:fromId codPedido:[NSString stringWithFormat:@"Pedido %@", [pedido objectForKey:@"codPedido"]] description:[pedido objectForKey:@"description"] estadoPedido:estadoPedido valorPedido:valorPedido dataChat:[self getDataChatWithChannelId:channelId messageText:messageText topicSenderId:idUser senderId:userId tipoUser:tipoUser pedido:datosPedido logoProveedor:logoProveedor foto:userImage currentPage:currentPage usuario:datosUsuario messageId:&messageId]];
+            [self sendNotificationWithTitle:title body:messageText userId:userId channelId:channelId color:color userImage:userImage action:@"envio_chat" fromId:fromId codPedido:[NSString stringWithFormat:@"Pedido %@", [datosPedido objectForKey:@"codPedido"]] description:[datosPedido objectForKey:@"descriPedido"] estadoPedido:estadoPedido valorPedido:valorPedido dataChat:[self getDataChatWithChannelId:channelId messageText:messageText topicSenderId:idUser senderId:userId tipoUser:tipoUser pedido:datosPedido logoProveedor:logoProveedor foto:userImage currentPage:currentPage usuario:datosUsuario messageId:&messageId]];
             
         } else {
             NSLog(@"Error es: %@", error);
@@ -571,36 +570,39 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
      andCompletionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+        NSLog(@"Android httpResponse.statusCode es: %ld", httpResponse.statusCode);
         
         if(httpResponse.statusCode == 200) {
             NSError *parseError = nil;
             NSDictionary *responseDictionary = [NSJSONSerialization JSONObjectWithData:data options:0 error:&parseError];
             NSLog(@"524 Android The response is - %@",responseDictionary);
-            NSInteger success = [[responseDictionary objectForKey:@"success"] integerValue];
             
         } else {
-            NSLog(@"533 Android Error es: %@", error);
+            NSError *parseError = nil;
+            NSDictionary *responseDictionary = [NSJSONSerialization JSONObjectWithData:data options:0 error:&parseError];
+            NSLog(@"593 Android responseDictionary es: %@", responseDictionary);
+            NSLog(@"594 Android Error es: %@", error);
         }
     }];
 }
 
 - (NSDictionary *_Nonnull) getDataChatWithChannelId:(NSString *_Nonnull)channelId messageText:(NSString *_Nonnull)messageText topicSenderId:(NSString *_Nonnull)topicSenderId senderId:(NSString *_Nonnull)senderId tipoUser:(NSString *_Nonnull)tipoUser pedido:(NSDictionary *_Nonnull)pedido logoProveedor:(NSString *_Nonnull)logoProveedor foto:(NSString *_Nonnull)foto currentPage:(NSString *_Nonnull)currentPage usuario:(NSDictionary *_Nonnull)usuario messageId:(NSInteger *_Nonnull)messageId {
     
-    NSData *proveedorData = [[pedido objectForKey:@"proveedor"] dataUsingEncoding:NSUTF8StringEncoding];
-    NSError *errorParseProveedor = nil;
-    NSMutableDictionary *proveedor = [NSJSONSerialization JSONObjectWithData:proveedorData options:0 error:&errorParseProveedor];
+    NSMutableDictionary *proveedor = [pedido objectForKey:@"proveedor"];
+    /*NSLog(@"proveedor es: %@", proveedor);*/
     
-    NSData *clienteData = [[pedido objectForKey:@"cliente"] dataUsingEncoding:NSUTF8StringEncoding];
-    NSError *errorParseCliente = nil;
-    NSMutableDictionary *cliente = [NSJSONSerialization JSONObjectWithData:clienteData options:0 error:&errorParseCliente];
+    NSMutableDictionary *cliente = [pedido objectForKey:@"cliente"];
+    /*NSLog(@"cliente es: %@", cliente);*/
+    NSLog(@"cliente == NULL es: %d", cliente == [ NSNull null ]);
+    NSLog(@"cliente != NULL es: %d", cliente != [ NSNull null ]);
     
-    NSData *clienteProveedorData = [[pedido objectForKey:@"clienteProveedor"] dataUsingEncoding:NSUTF8StringEncoding];
-    NSError *errorParseClienteProveedor = nil;
-    NSMutableDictionary *clienteProveedor = [NSJSONSerialization JSONObjectWithData:clienteProveedorData options:0 error:&errorParseClienteProveedor];
+    NSMutableDictionary *clienteProveedor = [pedido objectForKey:@"clienteProveedor"];
+    /*NSLog(@"clienteProveedor es: %@", clienteProveedor);*/
+    NSLog(@"clienteProveedor == NULL es: %d", clienteProveedor == [ NSNull null ]);
+    NSLog(@"clienteProveedor != NULL es: %d", clienteProveedor != [ NSNull null ]);
     
-    NSData *empresaData = clienteProveedor != nil ? [[clienteProveedor objectForKey:@"empresa"] dataUsingEncoding:NSUTF8StringEncoding] : nil;
-    NSError *errorParseEmpresa = nil;
-    NSMutableDictionary *empresa = empresaData != nil ? [NSJSONSerialization JSONObjectWithData:empresaData options:0 error:&errorParseEmpresa] : nil;
+    NSMutableDictionary *empresa = clienteProveedor != [ NSNull null ] ? [clienteProveedor objectForKey:@"empresa"] : [ NSNull null ];
+    /*NSLog(@"empresa es: %@", empresa);*/
        
     NSDictionary * dataChat = @{
         @"_id": channelId,
@@ -630,19 +632,19 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
         @"paisProveedor": [proveedor objectForKey:@"paisProveedor"],
         @"ciudadProveedor": [proveedor objectForKey:@"ciudadProveedor"],
 
-        @"idCliente": cliente != nil ? [cliente objectForKey:@"id"] : nil,
-        @"nombreCliente": cliente != nil ? [cliente objectForKey:@"nombre"] : nil,
-        @"apellidoCliente": cliente != nil ? [cliente objectForKey:@"apellido"] : nil,
-        @"apiLogoCliente": cliente != nil ? [cliente objectForKey:@"api_logo"] : nil,
-        @"celularCliente": cliente != nil ? [cliente objectForKey:@"celular"] : nil,
+        @"idCliente": cliente != [NSNull null] ? [cliente objectForKey:@"id"] : [NSNull null],
+        @"nombreCliente": cliente != [NSNull null] ? [cliente objectForKey:@"nombre"] : [NSNull null],
+        @"apellidoCliente": cliente != [NSNull null] ? [cliente objectForKey:@"apellido"] : [NSNull null],
+        @"apiLogoCliente": cliente != [NSNull null] ? [cliente objectForKey:@"api_logo"] : [NSNull null],
+        @"celularCliente": cliente != [NSNull null] ? [cliente objectForKey:@"celular"] : [NSNull null],
 
-        @"idClienteProveedor": clienteProveedor != nil ? [clienteProveedor objectForKey:@"id"] : nil,
-        @"nombreClienteProveedor": clienteProveedor != nil ? [clienteProveedor objectForKey:@"nombreProveedor"] : nil,
-        @"apellidoClienteProveedor": clienteProveedor != nil ? [clienteProveedor objectForKey:@"apellidoProveedor"] : nil,
-        @"apiLogoClienteProveedor": clienteProveedor != nil ? [empresa objectForKey:@"api_logo"] : nil,
-        @"celularClienteProveedor": clienteProveedor != nil ? [clienteProveedor objectForKey:@"celularProveedor"] : nil,
-        @"nombreEmpresaClienteProveedor": clienteProveedor != nil ? [empresa objectForKey:@"nombre"] : nil,
-        @"ubicacionClienteProveedor": clienteProveedor != nil ? [clienteProveedor objectForKey:@"ubicacion"] : nil,
+        @"idClienteProveedor": clienteProveedor != [NSNull null] ? [clienteProveedor objectForKey:@"id"] : [NSNull null],
+        @"nombreClienteProveedor": clienteProveedor != [NSNull null] ? [clienteProveedor objectForKey:@"nombreProveedor"] : [NSNull null],
+        @"apellidoClienteProveedor": clienteProveedor != [NSNull null] ? [clienteProveedor objectForKey:@"apellidoProveedor"] : [NSNull null],
+        @"apiLogoClienteProveedor": clienteProveedor != [NSNull null] ? [empresa objectForKey:@"api_logo"] : [NSNull null],
+        @"celularClienteProveedor": clienteProveedor != [NSNull null] ? [clienteProveedor objectForKey:@"celularProveedor"] : [NSNull null],
+        @"nombreEmpresaClienteProveedor": clienteProveedor != [NSNull null] ? [empresa objectForKey:@"nombre"] : [NSNull null],
+        @"ubicacionClienteProveedor": clienteProveedor != [NSNull null] ? [clienteProveedor objectForKey:@"ubicacion"] : [NSNull null],
 
         @"messageId": [NSNumber numberWithInteger:*messageId],
         @"channel": channelId,
