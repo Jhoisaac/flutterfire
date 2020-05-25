@@ -16,7 +16,7 @@
 NSString *const kGCMMessageIDKey = @"gcm.message_id";
 
 #if defined(__IPHONE_10_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_10_0
-@interface FLTFirebaseMessagingPlugin () <FIRMessagingDelegate>
+@interface FLTFirebaseMessagingPlugin () <FIRMessagingDelegate, UNUserNotificationCenterDelegate>
 
 - (void) sendNotificationWithTitle:(NSString *_Nonnull)title body:(NSString *_Nonnull)body userId:(NSString *_Nonnull)userId channelId:(NSString *_Nonnull)channelId color:(NSString *_Nonnull)color userImage:(NSString *_Nonnull)userImage action:(NSString *_Nonnull)action fromId:(NSString *_Nonnull)fromId codPedido:(NSString *_Nonnull)codPedido description:(NSString *_Nonnull)description estadoPedido:(NSString *_Nonnull)estadoPedido valorPedido:(NSString *_Nonnull)valorPedido dataChat:(NSDictionary *_Nonnull)dataChat;
 
@@ -75,10 +75,10 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     }
     [FIRMessaging messaging].delegate = self;
     // For iOS 10 display notification (sent via APNS)
-    /*if (@available(iOS 10.0, *)) {
-        NSLog(@"80 @available(iOS 10.0, * is true");
-        [UNUserNotificationCenter currentNotificationCenter].delegate = (id<UNUserNotificationCenterDelegate>) self;
-    } else {
+    if (@available(iOS 10.0, *)) {
+      [UNUserNotificationCenter currentNotificationCenter].delegate = (id<UNUserNotificationCenterDelegate>) self;
+      //[UNUserNotificationCenter currentNotificationCenter].delegate = self;
+    }/* else {
         // Fallback on earlier versions
         NSLog(@"84 @available(iOS 10.0, * is false");
     }*/
@@ -419,8 +419,8 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
         } /*else if ([response.actionIdentifier isEqualToString:@"APPROVE_ACTION"]) {
             NSLog(@"325 Button aprobar pressed! :)");
         }*/
-        completionHandler();
-        return;
+        completionHandler(); 
+        return; 
     }
     
     NSDictionary *userInfo = response.notification.request.content.userInfo;
