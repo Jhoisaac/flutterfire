@@ -25,10 +25,12 @@ NSString *const SHARED_PREFERENCES_NAME = @"FlutterSharedPreferences";
     AmzwkHttpUtil *networkHelper = [[AmzwkHttpUtil alloc] initWithUrl: [NSString stringWithFormat: @"%@/%@/%@", __CHAT_API_DOMAIN, channelId, @"message/save"]];
     
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    [dateFormatter setDateStyle:NSDateFormatterFullStyle];
-    [dateFormatter setTimeStyle:NSDateFormatterFullStyle];
+    [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    NSString *createAt = [dateFormatter stringFromDate:[NSDate date]];
+    /*NSLog(@"createAt es: %@", createAt);*/
     
-    NSString *bodyParams =[NSString stringWithFormat:@"message=%@/type=%@/createAt=%@", textMessage, @"text", [dateFormatter stringFromDate:[NSDate date]]];
+    NSString *bodyParams =[NSString stringWithFormat:@"message=%@&type=%@&createAt=%@", textMessage, @"text", createAt];
+    /*NSLog(@"bodyParams es: %@", bodyParams);*/
     //Convert the String to Data
     NSData *dataParams = [bodyParams dataUsingEncoding:NSUTF8StringEncoding];
     
