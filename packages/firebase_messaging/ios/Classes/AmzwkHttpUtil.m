@@ -69,14 +69,17 @@
     [self clientHttpPostWithDataParams:bodyIOS headers:headers contentType:contentType completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+        NSLog(@"httpResponse.statusCode es: %ld", httpResponse.statusCode);
         
         if(httpResponse.statusCode == 200) {            
             NSError *parseError = nil;
             NSDictionary *responseDictionary = [NSJSONSerialization JSONObjectWithData:data options:0 error:&parseError];
-            NSLog(@"iOS The response is - %@",responseDictionary);
-            NSInteger success = [[responseDictionary objectForKey:@"success"] integerValue];
+            NSLog(@"iOS The responseDictionary is - %@",responseDictionary);
             
         } else {
+            NSError *parseError = nil;
+            NSDictionary *responseDictionary = [NSJSONSerialization JSONObjectWithData:data options:0 error:&parseError];
+            NSLog(@"iOS The responseDictionary is - %@", responseDictionary);
             NSLog(@"iOS Error es: %@", error);
         }
     }];
