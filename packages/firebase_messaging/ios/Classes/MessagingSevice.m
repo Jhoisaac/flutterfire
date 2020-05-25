@@ -40,7 +40,7 @@ NSString *const SERVER_KEY = @"AAAAzrch3GY:APA91bHzNu6tfoaqLrVpnIqFyXq0pKdz7QhjZ
     NSDictionary * dataBodyIOS = @{
         @"to": fcmToken,
         @"priority": @"high",
-        @"mutable_content": @TRUE,
+        @"mutable_content": @YES,
         @"restricted_package_name": @"com.example.myandroidapp",
         @"notification": @{
             @"title": title,
@@ -49,12 +49,13 @@ NSString *const SERVER_KEY = @"AAAAzrch3GY:APA91bHzNu6tfoaqLrVpnIqFyXq0pKdz7QhjZ
             @"sound": @"default",
             @"badge": @"1",
             @"click_action": @"FLUTTER_NOTIFICATION_CLICK",
-            @"subtitle": @"subtitle",
+            /*@"subtitle": @"subtitle",*/
         },
         @"data": @{
             @"title": title,
             @"body": body,
             @"image": imageName,
+            @"type": @"text",
             @"tag": tagId,
             @"action": action,
             @"from_id": fromId,
@@ -63,6 +64,10 @@ NSString *const SERVER_KEY = @"AAAAzrch3GY:APA91bHzNu6tfoaqLrVpnIqFyXq0pKdz7QhjZ
             @"estado_pedido": estadoPedido,
             @"valor_pedido": valorPedido,
             @"data_chat": payload
+        },
+        @"options": @{
+            @"mutableContent": @YES,
+            @"apnsPushType": @"background"
         }
     };
     
@@ -73,6 +78,7 @@ NSString *const SERVER_KEY = @"AAAAzrch3GY:APA91bHzNu6tfoaqLrVpnIqFyXq0pKdz7QhjZ
             @"title": title,
             @"body": body,
             @"image": imageName,
+            @"type": @"text",
             @"android_channel_id": @"channel_id",
             @"icon": @"ic_notification",
             @"sound": @"default",
