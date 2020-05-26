@@ -486,8 +486,12 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     
     NSString *messageText = response.userText;
     NSString *channelId = userInfo[@"tag"];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    NSString *createAt = [dateFormatter stringFromDate:[NSDate date]];
+    /*NSLog(@"createAt es: %@", createAt);*/
     
-    [chatService saveMessageWithTextMessage:messageText andChannelId:channelId andCompletionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+    [chatService saveMessageWithTextMessage:messageText andChannelId:channelId andCreateAt:createAt andCompletionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
         /*NSLog(@"492 chatService:saveMessage() httpResponse.statusCode es:  %ld", httpResponse.statusCode);*/
         
@@ -542,7 +546,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
             /*NSLog(@"userId es: %@", userId);*/
             /*NSLog(@"fromId es: %@", fromId);*/
             
-            [self sendNotificationWithTitle:title body:messageText userId:userId channelId:channelId color:color userImage:userImage action:@"envio_chat" fromId:fromId codPedido:[NSString stringWithFormat:@"Pedido %@", [datosPedido objectForKey:@"codPedido"]] description:[datosPedido objectForKey:@"descriPedido"] estadoPedido:estadoPedido valorPedido:valorPedido dataChat:[self getDataChatWithChannelId:channelId messageText:messageText topicSenderId:idUser senderId:userId tipoUser:tipoUser pedido:datosPedido logoProveedor:logoProveedor foto:userImage currentPage:currentPage usuario:datosUsuario messageId:&messageId] completionHandler:completionHandler];
+            [self sendNotificationWithTitle:title body:messageText userId:userId channelId:channelId color:color userImage:userImage action:@"envio_chat" fromId:fromId codPedido:[NSString stringWithFormat:@"Pedido %@", [datosPedido objectForKey:@"codPedido"]] description:[datosPedido objectForKey:@"descriPedido"] estadoPedido:estadoPedido valorPedido:valorPedido dataChat:[self getDataChatWithChannelId:channelId messageText:messageText topicSenderId:idUser senderId:userId tipoUser:tipoUser pedido:datosPedido logoProveedor:logoProveedor foto:userImage currentPage:currentPage usuario:datosUsuario messageId:&messageId createAt:createAt] completionHandler:completionHandler];
             
         } else {
             NSLog(@"Error es: %@", error);
@@ -588,7 +592,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     }];
 }
 
-- (NSDictionary *_Nonnull) getDataChatWithChannelId:(NSString *_Nonnull)channelId messageText:(NSString *_Nonnull)messageText topicSenderId:(NSString *_Nonnull)topicSenderId senderId:(NSString *_Nonnull)senderId tipoUser:(NSString *_Nonnull)tipoUser pedido:(NSDictionary *_Nonnull)pedido logoProveedor:(NSString *_Nonnull)logoProveedor foto:(NSString *_Nonnull)foto currentPage:(NSString *_Nonnull)currentPage usuario:(NSDictionary *_Nonnull)usuario messageId:(NSInteger *_Nonnull)messageId {
+- (NSDictionary *_Nonnull) getDataChatWithChannelId:(NSString *_Nonnull)channelId messageText:(NSString *_Nonnull)messageText topicSenderId:(NSString *_Nonnull)topicSenderId senderId:(NSString *_Nonnull)senderId tipoUser:(NSString *_Nonnull)tipoUser pedido:(NSDictionary *_Nonnull)pedido logoProveedor:(NSString *_Nonnull)logoProveedor foto:(NSString *_Nonnull)foto currentPage:(NSString *_Nonnull)currentPage usuario:(NSDictionary *_Nonnull)usuario messageId:(NSInteger *_Nonnull)messageId createAt:(NSString *_Nonnull)createAt {
     
     NSMutableDictionary *proveedor = [pedido objectForKey:@"proveedor"];
     /*NSLog(@"proveedor es: %@", proveedor);*/
@@ -607,7 +611,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     /*NSLog(@"empresa es: %@", empresa);*/
        
     NSDictionary * dataChat = @{
-        @"_id": channelId,
+        @"_id": [pedido objectForKey:@"codPedido"],
         @"idPediProveedor": [pedido objectForKey:@"codPedido"],
         @"descriPedido": [pedido objectForKey:@"descriPedido"],
         @"estadoPedido": [pedido objectForKey:@"estadoPedido"],
@@ -650,15 +654,12 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 
         @"messageId": [NSNumber numberWithInteger:*messageId],
         @"channel": channelId,
-        @"asunto": @"chatwork",
         @"senderId": senderId,
-        @"command": @"message",
-        @"category": @"",
         @"message": messageText,
         @"type": @"text",
-        @"createAtChat": @"createAtChat",
-        @"width":@"width",
-        @"height": @"height",
+        @"createAtChat": createAt,
+        @"width":@"0",
+        @"height": @"0",
 
         @"celular": [pedido objectForKey:@"celular"],
         @"representante": [proveedor objectForKey:@"nombre_proveedor"],
