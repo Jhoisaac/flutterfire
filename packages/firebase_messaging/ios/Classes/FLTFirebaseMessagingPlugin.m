@@ -227,6 +227,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
                                         completion:^(NSError *error) {
                                           result(getFlutterError(error));
                                         }];
+      _launchNotification = nil;
   } else if ([@"getToken" isEqualToString:method]) {
     [[FIRInstanceID instanceID]
         instanceIDWithHandler:^(FIRInstanceIDResult *_Nullable instanceIDResult,
