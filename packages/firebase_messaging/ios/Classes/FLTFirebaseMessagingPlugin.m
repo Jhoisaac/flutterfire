@@ -611,7 +611,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     /*NSLog(@"empresa es: %@", empresa);*/
        
     NSDictionary * dataChat = @{
-        @"_id": [pedido objectForKey:@"codPedido"],
+        @"_id": [pedido objectForKey:@"id"],
         @"idPediProveedor": [pedido objectForKey:@"codPedido"],
         @"descriPedido": [pedido objectForKey:@"descriPedido"],
         @"estadoPedido": [pedido objectForKey:@"estadoPedido"],
