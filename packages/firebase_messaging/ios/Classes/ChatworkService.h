@@ -12,7 +12,7 @@
 
 @interface ChatworkService : NSObject
 
-- (int) saveMessageWithTextMessage:(NSString *_Nonnull)textMessage andChannelId:(NSString *_Nonnull)channelId andCompletionHandler:(void (^_Nonnull)(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error))completionHandler;
+- (void) saveMessageWithTextMessage:(NSString *_Nonnull)textMessage andChannelId:(NSString *_Nonnull)channelId andCreateAt:(NSString *_Nonnull)createAt andCompletionHandler:(void (^_Nonnull)(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error))completionHandler;
 
 @end
 

@@ -21,13 +21,8 @@
 
 NSString *const SHARED_PREFERENCES_NAME = @"FlutterSharedPreferences";
 
-- (int) saveMessageWithTextMessage:(NSString *)textMessage andChannelId:(NSString *)channelId andCompletionHandler:(void (^_Nonnull)(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error))completionHandler {
+- (void) saveMessageWithTextMessage:(NSString *)textMessage andChannelId:(NSString *)channelId andCreateAt:(NSString *_Nonnull)createAt andCompletionHandler:(void (^_Nonnull)(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error))completionHandler {
     AmzwkHttpUtil *networkHelper = [[AmzwkHttpUtil alloc] initWithUrl: [NSString stringWithFormat: @"%@/%@/%@", __CHAT_API_DOMAIN, channelId, @"message/save"]];
-    
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
-    NSString *createAt = [dateFormatter stringFromDate:[NSDate date]];
-    /*NSLog(@"createAt es: %@", createAt);*/
     
     NSString *bodyParams =[NSString stringWithFormat:@"message=%@&type=%@&createAt=%@", textMessage, @"text", createAt];
     /*NSLog(@"bodyParams es: %@", bodyParams);*/
@@ -38,8 +33,6 @@ NSString *const SHARED_PREFERENCES_NAME = @"FlutterSharedPreferences";
     NSString *authValueHeader = [NSString stringWithFormat:@"Bearer %@", authToken];
     
     [networkHelper postDataWithParams:dataParams andHeaders:authValueHeader andContentType:@"application/json" andCompletionHandler:completionHandler];
-    
-    return 0;
 }
 
 - (NSString *) getAuthHeader {
