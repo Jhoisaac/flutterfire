@@ -265,6 +265,7 @@ public class FirebaseMessagingPlugin extends BroadcastReceiver
                       });
 
     } else if ("unsubscribeFromTopic".equals(call.method)) {
+      Log.e(TAG, "unsubscribeFromTopic() executed!");
       String topic = call.arguments();
       FirebaseMessaging.getInstance()
               .unsubscribeFromTopic(topic)
@@ -282,6 +283,9 @@ public class FirebaseMessagingPlugin extends BroadcastReceiver
                                   (NotificationManager) registrar.activeContext().getSystemService(Context.NOTIFICATION_SERVICE);
 
                           notificationManager.cancelAll();
+
+                          onDetachedFromActivity(); // this.mainActivity = null;
+                          Log.e(TAG, "onDetachedFromActivity() executed!");
 
                           result.success(null);
                         }
