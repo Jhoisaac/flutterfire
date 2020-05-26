@@ -655,7 +655,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 
         @"messageId": [NSNumber numberWithInteger:*messageId],
         @"channel": channelId,
-        @"senderId": senderId,
+        @"senderId": topicSenderId,
         @"message": messageText,
         @"type": @"text",
         @"createAtChat": createAt,
