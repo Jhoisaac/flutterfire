@@ -654,7 +654,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
         @"ubicacionClienteProveedor": clienteProveedor != [NSNull null] ? [clienteProveedor objectForKey:@"ubicacion"] : [NSNull null],
 
         @"messageId": [NSNumber numberWithInteger:*messageId],
-        @"channel": channelId,
+        @"channel": [pedido objectForKey:@"id"],
         @"senderId": senderId,
         @"message": messageText,
         @"type": @"text",
