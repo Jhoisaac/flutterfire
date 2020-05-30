@@ -425,10 +425,10 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     }
     
     NSDictionary *userInfo = response.notification.request.content.userInfo;
+    // Check to key to ensure we only handle messages from Firebase
     if (userInfo[kGCMMessageIDKey]) {
-      [self didReceiveRemoteNotification:userInfo];
-      // Must be called when finished
-      completionHandler();    //completionHandler(UIBackgroundFetchResultNoData);
+      [_channel invokeMethod:@"onResume" arguments:userInfo];
+      completionHandler();
     }
 }
 
