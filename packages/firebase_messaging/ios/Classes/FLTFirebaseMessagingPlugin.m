@@ -547,7 +547,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
             /*NSLog(@"userId es: %@", userId);*/
             /*NSLog(@"fromId es: %@", fromId);*/
             
-            [self sendNotificationWithTitle:title body:messageText userId:userId channelId:channelId color:color userImage:userImage action:@"envio_chat" fromId:fromId codPedido:[NSString stringWithFormat:@"Pedido %@", [datosPedido objectForKey:@"codPedido"]] description:[datosPedido objectForKey:@"descriPedido"] estadoPedido:estadoPedido valorPedido:valorPedido dataChat:[self getDataChatWithChannelId:channelId messageText:messageText topicSenderId:idUser senderId:fromId tipoUser:tipoUser pedido:datosPedido logoProveedor:logoProveedor foto:userImage currentPage:currentPage usuario:datosUsuario messageId:&messageId createAt:createAt] completionHandler:completionHandler];
+            [self sendNotificationWithTitle:title body:messageText userId:userId channelId:channelId color:color userImage:userImage action:@"envio_chat" fromId:fromId codPedido:[NSString stringWithFormat:@"Pedido %@", [datosPedido objectForKey:@"idPediProveedor"]] description:[datosPedido objectForKey:@"descriPedido"] estadoPedido:estadoPedido valorPedido:valorPedido dataChat:[self getDataChatWithChannelId:channelId messageText:messageText topicSenderId:idUser senderId:fromId tipoUser:tipoUser pedido:datosPedido logoProveedor:logoProveedor foto:userImage currentPage:currentPage usuario:datosUsuario messageId:&messageId createAt:createAt] completionHandler:completionHandler];
             
         } else {
             NSLog(@"Error es: %@", error);
@@ -595,63 +595,85 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 
 - (NSDictionary *_Nonnull) getDataChatWithChannelId:(NSString *_Nonnull)channelId messageText:(NSString *_Nonnull)messageText topicSenderId:(NSString *_Nonnull)topicSenderId senderId:(NSString *_Nonnull)senderId tipoUser:(NSString *_Nonnull)tipoUser pedido:(NSDictionary *_Nonnull)pedido logoProveedor:(NSString *_Nonnull)logoProveedor foto:(NSString *_Nonnull)foto currentPage:(NSString *_Nonnull)currentPage usuario:(NSDictionary *_Nonnull)usuario messageId:(NSInteger *_Nonnull)messageId createAt:(NSString *_Nonnull)createAt {
     
-    NSMutableDictionary *proveedor = [pedido objectForKey:@"proveedor"];
+    NSMutableDictionary *proveedorData = [pedido objectForKey:@"proveedor"];
+    NSMutableDictionary *empresaData = [proveedorData objectForKey:@"empresa"];
     /*NSLog(@"proveedor es: %@", proveedor);*/
     
-    NSMutableDictionary *cliente = [pedido objectForKey:@"cliente"];
+    NSMutableDictionary *clienteData = [pedido objectForKey:@"cliente"];
     /*NSLog(@"cliente es: %@", cliente);*/
     /*NSLog(@"cliente == NULL es: %d", cliente == [ NSNull null ]);
     NSLog(@"cliente != NULL es: %d", cliente != [ NSNull null ]);*/
     
-    NSMutableDictionary *clienteProveedor = [pedido objectForKey:@"clienteProveedor"];
+    NSMutableDictionary *clienteProveedorData = [pedido objectForKey:@"clienteProveedor"];
     /*NSLog(@"clienteProveedor es: %@", clienteProveedor);*/
     /*NSLog(@"clienteProveedor == NULL es: %d", clienteProveedor == [ NSNull null ]);
     NSLog(@"clienteProveedor != NULL es: %d", clienteProveedor != [ NSNull null ]);*/
     
-    NSMutableDictionary *empresa = clienteProveedor != [ NSNull null ] ? [clienteProveedor objectForKey:@"empresa"] : [ NSNull null ];
+    NSMutableDictionary *empresaClienteProvData = clienteProveedorData != [ NSNull null ] ? [clienteProveedorData objectForKey:@"empresa"] : [ NSNull null ];
     /*NSLog(@"empresa es: %@", empresa);*/
        
     NSDictionary * dataChat = @{
-        @"_id": [pedido objectForKey:@"id"],
-        @"idPediProveedor": [pedido objectForKey:@"codPedido"],
+        @"id": [pedido objectForKey:@"id"],
+        @"idPediProveedor": [pedido objectForKey:@"idPediProveedor"],
         @"descriPedido": [pedido objectForKey:@"descriPedido"],
         @"estadoPedido": [pedido objectForKey:@"estadoPedido"],
-        @"subtotalPedido": [pedido objectForKey:@"subTotal"],
-        @"pathRequer": [pedido objectForKey:@"requerimiento"],
+        @"subtotalPedido": [pedido objectForKey:@"subtotalPedido"],
+        @"requerimientoFile": [pedido objectForKey:@"requerimiento"],
         @"estadoPedidoCliente": [pedido objectForKey:@"estadoPedidoCliente"],
-        @"createAt": [pedido objectForKey:@"date"],
-        @"pathPropuesta": [pedido objectForKey:@"propuesta"],
+        @"createAt": [pedido objectForKey:@"createAt"],
+        @"updatedAt": [pedido objectForKey:@"updatedAt"],
+        @"propuestaFile": [pedido objectForKey:@"propuesta"],
         @"tipoUser": [pedido objectForKey:@"tipoUser"],
         @"topicSenderId": [usuario objectForKey:@"id"],
         @"isOferta": [pedido objectForKey:@"isOferta"],
         @"imagenPublicacion": [pedido objectForKey:@"imagenPublicacion"],
+        @"ordenprov": @0,
+        @"ordenclient": @0,
+        
+        @"idProveedor": @{
+            @"id": [proveedorData objectForKey:@"id"],
+            @"nombreProveedor": [proveedorData objectForKey:@"nombreProveedor"],
+            @"apellidoProveedor": [proveedorData objectForKey:@"apellidoProveedor"],
+            @"celularProveedor": [proveedorData objectForKey:@"celular"],
+            @"actividadEconomica": [proveedorData objectForKey:@"actividadEconomica"],
+            @"ubicacion": [proveedorData objectForKey:@"ubicacion"],
+            @"pais": [proveedorData objectForKey:@"pais"],
+            @"ciudad": [proveedorData objectForKey:@"ciudad"],
+            @"urlmap": [proveedorData objectForKey:@"urlmap"],
+            @"empresa": @{
+                @"id": [empresaData objectForKey:@"id"],
+                @"nombre": [empresaData objectForKey:@"nombre"],
+                @"api_logo": [empresaData objectForKey:@"api_logo"],
+                @"tipoCuenta": [empresaData objectForKey:@"tipoCuenta"],
+            }
+        },
 
-        @"indexO": @0,
+        @"cliente": @{
+            @"id": clienteData != [NSNull null] ? [clienteData objectForKey:@"id"] : [NSNull null],
+            @"nombre": clienteData != [NSNull null] ? [clienteData objectForKey:@"nombre"] : [NSNull null],
+            @"apellido": clienteData != [NSNull null] ? [clienteData objectForKey:@"apellido"] : [NSNull null],
+            @"celular": clienteData != [NSNull null] ? [clienteData objectForKey:@"celular"] : [NSNull null],
+            @"api_logo": clienteData != [NSNull null] ? [clienteData objectForKey:@"api_logo"] : [NSNull null],
+            @"urlmap": clienteData != [NSNull null] ? [clienteData objectForKey:@"urlmap"] : [NSNull null],
+        },
 
-        @"idProveedor": [proveedor objectForKey:@"id"],
-        @"nombreProveedor": [proveedor objectForKey:@"nombreProveedor"],
-        @"apellidoProveedor": [proveedor objectForKey:@"apellidoProveedor"],
-        @"apiLogoProveedor": [proveedor objectForKey:@"api_logo"],
-        @"celularProveedor": [proveedor objectForKey:@"celular"],
-        @"nombreEmpresaProveedor": [proveedor objectForKey:@"nombre_empresa"],
-        @"ubicacionProveedor": [proveedor objectForKey:@"ubicacion"],
-        @"actividadEconomicaProveedor": [proveedor objectForKey:@"actividadEconomicaProveedor"],
-        @"paisProveedor": [proveedor objectForKey:@"paisProveedor"],
-        @"ciudadProveedor": [proveedor objectForKey:@"ciudadProveedor"],
-
-        @"idCliente": cliente != [NSNull null] ? [cliente objectForKey:@"id"] : [NSNull null],
-        @"nombreCliente": cliente != [NSNull null] ? [cliente objectForKey:@"nombre"] : [NSNull null],
-        @"apellidoCliente": cliente != [NSNull null] ? [cliente objectForKey:@"apellido"] : [NSNull null],
-        @"apiLogoCliente": cliente != [NSNull null] ? [cliente objectForKey:@"api_logo"] : [NSNull null],
-        @"celularCliente": cliente != [NSNull null] ? [cliente objectForKey:@"celular"] : [NSNull null],
-
-        @"idClienteProveedor": clienteProveedor != [NSNull null] ? [clienteProveedor objectForKey:@"id"] : [NSNull null],
-        @"nombreClienteProveedor": clienteProveedor != [NSNull null] ? [clienteProveedor objectForKey:@"nombreProveedor"] : [NSNull null],
-        @"apellidoClienteProveedor": clienteProveedor != [NSNull null] ? [clienteProveedor objectForKey:@"apellidoProveedor"] : [NSNull null],
-        @"apiLogoClienteProveedor": clienteProveedor != [NSNull null] ? [empresa objectForKey:@"api_logo"] : [NSNull null],
-        @"celularClienteProveedor": clienteProveedor != [NSNull null] ? [clienteProveedor objectForKey:@"celularProveedor"] : [NSNull null],
-        @"nombreEmpresaClienteProveedor": clienteProveedor != [NSNull null] ? [empresa objectForKey:@"nombre"] : [NSNull null],
-        @"ubicacionClienteProveedor": clienteProveedor != [NSNull null] ? [clienteProveedor objectForKey:@"ubicacion"] : [NSNull null],
+        @"clienteProveedor": @{
+            @"id": clienteProveedorData != [NSNull null] ? [clienteProveedorData objectForKey:@"id"] : [NSNull null],
+            @"nombreProveedor": clienteProveedorData != [NSNull null] ? [clienteProveedorData objectForKey:@"nombreProveedor"] : [NSNull null],
+            @"apellidoProveedor": clienteProveedorData != [NSNull null] ? [clienteProveedorData objectForKey:@"apellidoProveedor"] : [NSNull null],
+            @"celularProveedor": clienteProveedorData != [NSNull null] ? [clienteProveedorData objectForKey:@"celularProveedor"] : [NSNull null],
+            @"ubicacion": clienteProveedorData != [NSNull null] ? [clienteProveedorData objectForKey:@"ubicacion"] : [NSNull null],
+            @"actividadEconomica": [clienteProveedorData objectForKey:@"actividadEconomica"],
+            @"pais": [clienteProveedorData objectForKey:@"pais"],
+            @"ciudad": [clienteProveedorData objectForKey:@"ciudad"],
+            @"urlmap": [clienteProveedorData objectForKey:@"urlmap"],
+            @"empresa": @{
+                @"id": [empresaClienteProvData objectForKey:@"id"],
+                @"nombre": [empresaClienteProvData objectForKey:@"nombre"],
+                @"api_logo": [empresaClienteProvData objectForKey:@"api_logo"],
+                @"tipoCuenta": [empresaClienteProvData objectForKey:@"tipoCuenta"],
+            }
+        },
 
         @"messageId": [NSNumber numberWithInteger:*messageId],
         @"channel": [pedido objectForKey:@"id"],
@@ -662,7 +684,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
         @"width":@"0",
         @"height": @"0",
 
-        @"celular": [pedido objectForKey:@"celular"],
+        @"celular": [proveedorData objectForKey:@"celular"],
         @"representante": [proveedor objectForKey:@"nombre_proveedor"],
         @"idProv": [proveedor objectForKey:@"id"],
         @"logoProveedor": [proveedor objectForKey:@"api_logo"],
@@ -678,7 +700,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
         @"description": messageText,
         @"currentPage": currentPage,
         @"typeCliente": tipoUser,
-        @"notificationColor": [pedido objectForKey:@"color"],
+        @"notificationColor": @"#4caf50", // [pedido objectForKey:@"color"]
 
         @"tipoUserItem": @"js-clnts-pers",
         @"nombreUserItem": @"SCOTH WILIAMS",
