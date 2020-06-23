@@ -697,7 +697,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
         @"logoProv": logoProveedor,
         @"celulartoChat": [usuario objectForKey:@"celular"],
         @"nombretoChat": [usuario objectForKey:@"nombre_consumidor"],
-        @"logoProv": @"",
+        @"tipoAdj": @"",
 
         @"image": foto,
         @"description": messageText,
