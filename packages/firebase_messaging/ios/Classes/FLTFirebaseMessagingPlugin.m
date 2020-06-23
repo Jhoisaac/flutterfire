@@ -595,22 +595,25 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
 
 - (NSDictionary *_Nonnull) getDataChatWithChannelId:(NSString *_Nonnull)channelId messageText:(NSString *_Nonnull)messageText topicSenderId:(NSString *_Nonnull)topicSenderId senderId:(NSString *_Nonnull)senderId tipoUser:(NSString *_Nonnull)tipoUser pedido:(NSDictionary *_Nonnull)pedido logoProveedor:(NSString *_Nonnull)logoProveedor foto:(NSString *_Nonnull)foto currentPage:(NSString *_Nonnull)currentPage usuario:(NSDictionary *_Nonnull)usuario messageId:(NSInteger *_Nonnull)messageId createAt:(NSString *_Nonnull)createAt {
     
+//    NSLog(@"[pedido objectForKey:@\"tipoUser\"] es: %@", [pedido objectForKey:@"tipoUser"]);
+    
     NSMutableDictionary *proveedorData = [pedido objectForKey:@"proveedor"];
     NSMutableDictionary *empresaData = [proveedorData objectForKey:@"empresa"];
-    /*NSLog(@"proveedor es: %@", proveedor);*/
+//    NSLog(@"proveedorData es: %@", proveedorData);
+//    NSLog(@"empresaData es: %@", empresaData);
     
     NSMutableDictionary *clienteData = [pedido objectForKey:@"cliente"];
-    /*NSLog(@"cliente es: %@", cliente);*/
-    /*NSLog(@"cliente == NULL es: %d", cliente == [ NSNull null ]);
-    NSLog(@"cliente != NULL es: %d", cliente != [ NSNull null ]);*/
+//    NSLog(@"clienteData es: %@", clienteData);
+//    NSLog(@"clienteData == NULL es: %d", clienteData == [ NSNull null ]);
+//    NSLog(@"clienteData != NULL es: %d", clienteData != [ NSNull null ]);
     
     NSMutableDictionary *clienteProveedorData = [pedido objectForKey:@"clienteProveedor"];
-    /*NSLog(@"clienteProveedor es: %@", clienteProveedor);*/
-    /*NSLog(@"clienteProveedor == NULL es: %d", clienteProveedor == [ NSNull null ]);
-    NSLog(@"clienteProveedor != NULL es: %d", clienteProveedor != [ NSNull null ]);*/
+//    NSLog(@"clienteProveedorData es: %@", clienteProveedorData);
+//    NSLog(@"clienteProveedorData == NULL es: %d", clienteProveedorData == [ NSNull null ]);
+//    NSLog(@"clienteProveedorData != NULL es: %d", clienteProveedorData != [ NSNull null ]);
     
     NSMutableDictionary *empresaClienteProvData = clienteProveedorData != [ NSNull null ] ? [clienteProveedorData objectForKey:@"empresa"] : [ NSNull null ];
-    /*NSLog(@"empresa es: %@", empresa);*/
+//    NSLog(@"empresaClienteProvData es: %@", empresaClienteProvData);
        
     NSDictionary * dataChat = @{
         @"id": [pedido objectForKey:@"id"],
@@ -630,7 +633,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
         @"ordenprov": @0,
         @"ordenclient": @0,
         
-        @"idProveedor": @{
+        @"proveedor": @{
             @"id": [proveedorData objectForKey:@"id"],
             @"nombreProveedor": [proveedorData objectForKey:@"nombreProveedor"],
             @"apellidoProveedor": [proveedorData objectForKey:@"apellidoProveedor"],
@@ -648,21 +651,21 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
             }
         },
 
-        @"cliente": @{
-            @"id": clienteData != [NSNull null] ? [clienteData objectForKey:@"id"] : [NSNull null],
-            @"nombre": clienteData != [NSNull null] ? [clienteData objectForKey:@"nombre"] : [NSNull null],
-            @"apellido": clienteData != [NSNull null] ? [clienteData objectForKey:@"apellido"] : [NSNull null],
-            @"celular": clienteData != [NSNull null] ? [clienteData objectForKey:@"celular"] : [NSNull null],
-            @"api_logo": clienteData != [NSNull null] ? [clienteData objectForKey:@"api_logo"] : [NSNull null],
-            @"urlmap": clienteData != [NSNull null] ? [clienteData objectForKey:@"urlmap"] : [NSNull null],
-        },
+        @"cliente": [[pedido objectForKey:@"tipoUser"] isEqualToString:@"personal"] ? @{
+            @"id": [clienteData objectForKey:@"id"],
+            @"nombre": [clienteData objectForKey:@"nombre"],
+            @"apellido": [clienteData objectForKey:@"apellido"],
+            @"celular": [clienteData objectForKey:@"celular"],
+            @"api_logo": [clienteData objectForKey:@"api_logo"],
+            @"urlmap": [clienteData objectForKey:@"urlmap"],
+        } : [NSNull null],
 
-        @"clienteProveedor": @{
-            @"id": clienteProveedorData != [NSNull null] ? [clienteProveedorData objectForKey:@"id"] : [NSNull null],
-            @"nombreProveedor": clienteProveedorData != [NSNull null] ? [clienteProveedorData objectForKey:@"nombreProveedor"] : [NSNull null],
-            @"apellidoProveedor": clienteProveedorData != [NSNull null] ? [clienteProveedorData objectForKey:@"apellidoProveedor"] : [NSNull null],
-            @"celularProveedor": clienteProveedorData != [NSNull null] ? [clienteProveedorData objectForKey:@"celularProveedor"] : [NSNull null],
-            @"ubicacion": clienteProveedorData != [NSNull null] ? [clienteProveedorData objectForKey:@"ubicacion"] : [NSNull null],
+        @"clienteProveedor": ![[pedido objectForKey:@"tipoUser"] isEqualToString:@"personal"] ? @{
+            @"id": [clienteProveedorData objectForKey:@"id"],
+            @"nombreProveedor": [clienteProveedorData objectForKey:@"nombreProveedor"],
+            @"apellidoProveedor": [clienteProveedorData objectForKey:@"apellidoProveedor"],
+            @"celularProveedor": [clienteProveedorData objectForKey:@"celularProveedor"],
+            @"ubicacion": [clienteProveedorData objectForKey:@"ubicacion"],
             @"actividadEconomica": [clienteProveedorData objectForKey:@"actividadEconomica"],
             @"pais": [clienteProveedorData objectForKey:@"pais"],
             @"ciudad": [clienteProveedorData objectForKey:@"ciudad"],
@@ -673,7 +676,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
                 @"api_logo": [empresaClienteProvData objectForKey:@"api_logo"],
                 @"tipoCuenta": [empresaClienteProvData objectForKey:@"tipoCuenta"],
             }
-        },
+        } : [NSNull null],
 
         @"messageId": [NSNumber numberWithInteger:*messageId],
         @"channel": [pedido objectForKey:@"id"],
@@ -687,7 +690,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
         @"celular": [proveedorData objectForKey:@"celular"],
         @"representante": [proveedorData objectForKey:@"nombre_proveedor"],
         @"idProv": [proveedorData objectForKey:@"id"],
-        @"logoProveedor": [proveedorData objectForKey:@"api_logo"],
+        @"logoProveedor": [empresaData objectForKey:@"api_logo"],
         @"foto": foto,
         @"tipoChat": @true,
         @"navbarClnts": @true,
