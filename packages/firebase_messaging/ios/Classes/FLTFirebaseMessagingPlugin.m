@@ -685,9 +685,9 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
         @"height": @"0",
 
         @"celular": [proveedorData objectForKey:@"celular"],
-        @"representante": [proveedor objectForKey:@"nombre_proveedor"],
-        @"idProv": [proveedor objectForKey:@"id"],
-        @"logoProveedor": [proveedor objectForKey:@"api_logo"],
+        @"representante": [proveedorData objectForKey:@"nombre_proveedor"],
+        @"idProv": [proveedorData objectForKey:@"id"],
+        @"logoProveedor": [proveedorData objectForKey:@"api_logo"],
         @"foto": foto,
         @"tipoChat": @true,
         @"navbarClnts": @true,
