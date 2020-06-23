@@ -614,6 +614,9 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     
     NSMutableDictionary *empresaClienteProvData = clienteProveedorData != [ NSNull null ] ? [clienteProveedorData objectForKey:@"empresa"] : [ NSNull null ];
 //    NSLog(@"empresaClienteProvData es: %@", empresaClienteProvData);
+    
+//    NSLog(@"[[pedido objectForKey:@\"tipoUser\"] isEqualToString:@\"personal/\"] es: %d", [[pedido objectForKey:@"tipoUser"] isEqualToString:@"personal"]);
+//    NSLog(@"![[pedido objectForKey:@\"tipoUser\"] isEqualToString:@\"personal\"] es: %d", ![[pedido objectForKey:@"tipoUser"] isEqualToString:@"personal"]);
        
     NSDictionary * dataChat = @{
         @"id": [pedido objectForKey:@"id"],
@@ -646,7 +649,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
             @"empresa": @{
                 @"id": [empresaData objectForKey:@"id"],
                 @"nombre": [empresaData objectForKey:@"nombre"],
-                @"api_logo": [empresaData objectForKey:@"api_logo"],
+                @"logo": [empresaData objectForKey:@"api_logo"],
                 @"tipoCuenta": [empresaData objectForKey:@"tipoCuenta"],
             }
         },
@@ -673,7 +676,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
             @"empresa": @{
                 @"id": [empresaClienteProvData objectForKey:@"id"],
                 @"nombre": [empresaClienteProvData objectForKey:@"nombre"],
-                @"api_logo": [empresaClienteProvData objectForKey:@"api_logo"],
+                @"logo": [empresaClienteProvData objectForKey:@"api_logo"],
                 @"tipoCuenta": [empresaClienteProvData objectForKey:@"tipoCuenta"],
             }
         } : [NSNull null],
@@ -713,9 +716,8 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
         @"usuario": @"proveedor",
         @"toastrPos": @"toast-top-right",
     };
-    
+
     return dataChat;
 }
 
 @end
-
