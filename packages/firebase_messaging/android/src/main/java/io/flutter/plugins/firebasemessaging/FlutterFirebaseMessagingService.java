@@ -455,7 +455,8 @@ public class FlutterFirebaseMessagingService extends FirebaseMessagingService {
             || actionNotify.equals("entregar_pedido")
             || actionNotify.equals("recibir_pedido")
             || actionNotify.equals("completar_pedido")
-            || actionNotify.equals("finalizar_pedido")) {
+            || actionNotify.equals("finalizar_pedido")
+            || actionNotify.equals("update_data")) {
       return;
     }
 
