@@ -10,6 +10,7 @@
 #import "Firebase/Firebase.h"
 
 #import "ChatworkService.h"
+#import "TokenService.h"
 #import "MessagingService.h"
 #import "Constants.h"
 
@@ -496,7 +497,126 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
         /*NSLog(@"492 chatService:saveMessage() httpResponse.statusCode es:  %ld", httpResponse.statusCode);*/
         
+        if(httpResponse.statusCode == 401) {
+            NSLog(@"*****************************************************************");
+            NSLog(@"ChatworkService onFailure() %ld", (long)httpResponse.statusCode);
+            NSLog(@"*****************************************************************");
+            
+            TokenService *tokenService = [[TokenService alloc] init];
+            NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+            NSString *refreshToken = [prefs stringForKey:@"flutter.refreshToken"];
+            [tokenService refreshTokenWithRefreshedToken:refreshToken andCompletionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+                NSHTTPURLResponse *httpResponseToken = (NSHTTPURLResponse *)response;
+                /*NSLog(@"492 TokenService:saveMessage() httpResponseToken.statusCode es:  %ld", httpResponseToken.statusCode);*/
+                
+                if(httpResponseToken.statusCode == 414) {
+                    NSLog(@"*****************************************************************");
+                    NSLog(@"TokenService onFailure() %ld", (long)httpResponseToken.statusCode);
+                    NSLog(@"*****************************************************************");
+                    
+                    NSLog(@"Tu sesión ha sido cerrada. Por favor abre la app amazingwork.");
+                }
+                
+                if(httpResponseToken.statusCode == 201) {
+                    NSLog(@"*****************************************************************");
+                    NSLog(@"TokenService onSuccess() %ld", (long)httpResponse.statusCode);
+                    NSLog(@"*****************************************************************");
+                    
+                    NSError *parseErrorTk = nil;
+                    NSDictionary *responseDictionaryTk = [NSJSONSerialization JSONObjectWithData:data options:0 error:&parseErrorTk];
+
+                    NSString *newRefreshToken = [responseDictionaryTk objectForKey:@"refresh_token"];
+                    NSString *newAccessToken = [responseDictionaryTk objectForKey:@"token"];
+                    
+                    [[NSUserDefaults standardUserDefaults] setObject:newAccessToken forKey:@"flutter.accessToken"];
+                    [[NSUserDefaults standardUserDefaults] synchronize];
+                    
+                    [chatService saveMessageWithTextMessage:messageText andChannelId:channelId andCreateAt:createAt andCompletionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+                        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+                        /*NSLog(@"492 chatService:saveMessage() httpResponse.statusCode es:  %ld", httpResponse.statusCode);*/
+                        
+                        if(httpResponse.statusCode == 401) {
+                            NSLog(@"*****************************************************************");
+                            NSLog(@"TokenService onFailure() %ld", (long)httpResponseToken.statusCode);
+                            NSLog(@"*****************************************************************");
+                            
+                            NSLog(@"Tu sesión ha sido cerrada. Por favor abre la app amazingwork.");
+                            return;
+                        }
+                        
+                        if(httpResponse.statusCode == 201) {
+                            NSLog(@"*****************************************************************");
+                            NSLog(@"ChatworkService onSuccess() %ld", (long)httpResponse.statusCode);
+                            NSLog(@"*****************************************************************");
+
+                            NSError *parseError = nil;
+                            NSDictionary *responseDictionary = [NSJSONSerialization JSONObjectWithData:data options:0 error:&parseError];
+                            /*NSLog(@"responseDictionary es: %@",responseDictionary);*/
+                            
+                            NSMutableDictionary *datosPedido = [responseDictionary objectForKey:@"pedido"];
+                            /*NSLog(@"datosPedido es: %@",datosPedido);*/
+                            
+                            NSMutableDictionary *datosUsuario = [responseDictionary objectForKey:@"datosusuario"];
+                            /*NSLog(@"datosUsuario es: %@",datosUsuario);*/
+                            
+                            NSString *userId = userInfo[@"from_id"];
+                            NSString *logoProveedor = userInfo[@"fcm_options"][@"image"];
+
+                            NSString *estadoPedido = userInfo[@"estado_pedido"];
+                            NSString *valorPedido = userInfo[@"valor_pedido"];
+                            
+                            //try {
+                            NSString *title = [responseDictionary objectForKey:@"empresa"]; //response.getString("empresa") + " - Chatwork";
+                            NSString *tipoUser = [responseDictionary objectForKey:@"tipoUsuario"];
+                            NSString *idUser = [[responseDictionary objectForKey:@"idUser"] stringValue];
+                            NSString *fromId = [NSString stringWithFormat:@"%@-%@", tipoUser, idUser];
+                            NSString *userImage = [NSString stringWithFormat:@"https://%@/uploads/logosProveedor/%@", __SERVER_DOMAIN, [responseDictionary objectForKey:@"fotoLogo"]];
+                            NSInteger messageId = [[responseDictionary objectForKey:@"messageId"] intValue];
+                            
+                            NSString *dataChat = userInfo[@"data_chat"];
+                            NSData *chatData = [dataChat dataUsingEncoding:NSUTF8StringEncoding];
+                            NSError *errorParse = nil;
+                            
+                            //NSDictionary pedido = new JSONObject(bundle.getString("data_chat"));
+                            //pedido.put("nombre", response.getString("nombre"));
+                            //pedido.put("celular", response.getString("celular"));
+                            
+                            NSMutableDictionary *chatPedido = [NSJSONSerialization JSONObjectWithData:chatData options:0 error:&errorParse];
+                            NSMutableDictionary *pedido = [[NSMutableDictionary alloc] initWithDictionary:chatPedido copyItems:TRUE];
+                            
+                            [pedido setValue:[responseDictionary objectForKey:@"nombre"] forKey:@"nombre"];
+                            [pedido setValue:[responseDictionary objectForKey:@"celular"] forKey:@"celular"];
+                            
+                            //NSString *currentPage = pedido.getString("currentPage").equals("misCompras") ? "misVentas" : "misCompras";
+                            //NSString *idProv = pedido.getString("idProv");
+                            //NSString *color = Objects.requireNonNull(idUser).equals(idProv) ? COLOR_CONSUMIDOR : COLOR_PROVEEDOR;
+                            
+                            NSString *currentPage = [[pedido objectForKey:@"currentPage"] isEqualToString:@"misCompras"] ? @"misVentas" : @"misCompras";
+                            NSString *idProv = [pedido objectForKey:@"idProv"];
+                            
+                            NSString *color = [idUser isEqualToString:idProv] ? COLOR_CONSUMIDOR : COLOR_PROVEEDOR;
+                            
+                            /*NSLog(@"userId es: %@", userId);*/
+                            /*NSLog(@"fromId es: %@", fromId);*/
+                            
+                            [self sendNotificationWithTitle:title body:messageText userId:userId channelId:channelId color:color userImage:userImage action:@"envio_chat" fromId:fromId codPedido:[NSString stringWithFormat:@"Pedido %@", [datosPedido objectForKey:@"idPediProveedor"]] description:[datosPedido objectForKey:@"descriPedido"] estadoPedido:estadoPedido valorPedido:valorPedido dataChat:[self getDataChatWithChannelId:channelId messageText:messageText topicSenderId:idUser senderId:fromId tipoUser:tipoUser pedido:datosPedido logoProveedor:logoProveedor foto:userImage currentPage:currentPage usuario:datosUsuario messageId:&messageId createAt:createAt] completionHandler:completionHandler];
+                            
+                        } else {
+                            NSLog(@"Error es: %@", error);
+                        }
+                    }];
+                    
+                } else {
+                    NSLog(@"Error es: %@", error);
+                }
+            }];
+        }
+        
         if(httpResponse.statusCode == 201) {
+            NSLog(@"*****************************************************************");
+            NSLog(@"ChatworkService onSuccess() %ld", (long)httpResponse.statusCode);
+            NSLog(@"*****************************************************************");
+
             NSError *parseError = nil;
             NSDictionary *responseDictionary = [NSJSONSerialization JSONObjectWithData:data options:0 error:&parseError];
             /*NSLog(@"responseDictionary es: %@",responseDictionary);*/

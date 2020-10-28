@@ -37,7 +37,7 @@ NSString *const SHARED_PREFERENCES_NAME = @"FlutterSharedPreferences";
 
 - (NSString *) getAuthHeader {
     NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
-    NSString *token = [prefs stringForKey:@"flutter.token"];
+    NSString *token = [prefs stringForKey:@"flutter.accessToken"];
     
     return token;
 }
