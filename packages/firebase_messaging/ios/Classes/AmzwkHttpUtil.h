@@ -18,6 +18,8 @@
 
 - (int) postDataNotifyWithDataBodyParams:(NSData *_Nonnull)params headers:(NSString *_Nonnull)headers contentType:(NSString *_Nonnull)contentType completionHandler:(void (^_Nonnull)(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error))completionHandler;
 
+- (int) refreshAuthWithParams:(NSData *_Nonnull)params andContentType:(NSString *_Nonnull)contentType andCompletionHandler:(void (^_Nonnull)(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error))completionHandler;
+
 @end
 
 #endif /* AmzwkHttpUtil_h */

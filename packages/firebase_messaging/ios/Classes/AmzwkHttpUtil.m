@@ -52,6 +52,23 @@
     return 0;
 }
 
+- (int) refreshAuthWithParams:(NSData *)paramsData andContentType:(NSString *)contentType andCompletionHandler:(void (^_Nonnull)(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error))completionHandler {
+    NSMutableURLRequest *urlRequest = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:_url]];
+    
+    //create the Method "GET" or "POST"
+    [urlRequest setHTTPMethod:@"POST"];
+    
+    //Apply the data to the body
+    [urlRequest setHTTPBody:paramsData];
+
+    NSURLSession *session = [NSURLSession sharedSession];
+    NSURLSessionDataTask *dataTask = [session dataTaskWithRequest:urlRequest completionHandler:completionHandler];
+    
+    [dataTask resume];
+    
+    return 0;
+}
+
 - (NSData *_Nonnull) getBodyParamsWithJsonParams:(NSDictionary *_Nonnull)jsonParams {
     // Make sure that the above dictionary can be converted to JSON data
     if([NSJSONSerialization isValidJSONObject:jsonParams]) {
