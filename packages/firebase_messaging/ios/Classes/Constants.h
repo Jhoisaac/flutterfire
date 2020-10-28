@@ -11,5 +11,6 @@
 
 extern NSString *const __SERVER_DOMAIN;
 extern NSString *const __CHAT_API_DOMAIN;
+extern NSString *const __SHARED_PREFERENCES_NAME;
 
 @end

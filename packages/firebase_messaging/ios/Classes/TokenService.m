@@ -19,8 +19,6 @@
     NSString *_key;
 }
 
-NSString *const SHARED_PREFERENCES_NAME = @"FlutterSharedPreferences";
-
 - (void) refreshTokenWithRefreshedToken:(NSString *)refreshedToken andCompletionHandler:(void (^_Nonnull)(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error))completionHandler {
     AmzwkHttpUtil *networkHelper = [[AmzwkHttpUtil alloc] initWithUrl: [NSString stringWithFormat: @"%@/%@", __SERVER_DOMAIN, @"api/tokens/refresh"]];
     
