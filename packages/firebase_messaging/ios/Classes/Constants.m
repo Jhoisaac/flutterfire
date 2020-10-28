@@ -10,8 +10,8 @@
 
 @implementation Constants
 // Assign it with following structure
-NSString *const __SERVER_DOMAIN = @"amazingwork.com";
-NSString *const __CHAT_API_DOMAIN = @"https://amazingwork.com/api/chat";
+NSString *const __SERVER_DOMAIN = @"amazingwork.net";
+NSString *const __CHAT_API_DOMAIN = @"https://amazingwork.net/api/chat";
 NSString *const __SHARED_PREFERENCES_NAME = @"FlutterSharedPreferences";
 
 @end
