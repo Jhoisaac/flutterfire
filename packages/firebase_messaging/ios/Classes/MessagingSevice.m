@@ -7,6 +7,7 @@
 
 #import "MessagingService.h"
 #import "AmzwkHttpUtil.h"
+#import "Constants.h"
 
 @interface MessagingService()
 
@@ -22,7 +23,7 @@ NSString *const SERVER_KEY = @"AAAAzrch3GY:APA91bHzNu6tfoaqLrVpnIqFyXq0pKdz7QhjZ
 - (int) sendToTopicWithTitle:(NSString *)title body:(NSString *)body topic:(NSString *)topic tagId:(NSString *)tagId colorIcon:(NSString *)colorIcon imageName:(NSString *)imageName action:(NSString *)action fromId:(NSString *)fromId codPedido:(NSString *)codPedido description:(NSString *)description estadoPedido:(NSString *)estadoPedido valorPedido:(NSString *)valorPedido payload:(NSData *)payload andCompletionHandler:(void (^_Nonnull)(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error))completionHandler {
     AmzwkHttpUtil *networkHelper = [[AmzwkHttpUtil alloc] initWithUrl: BASE_FCM_URL];
     
-    NSString *fcmToken = [NSString stringWithFormat: @"%@/%@", @"/topics", topic];
+    NSString *fcmToken = [NSString stringWithFormat: @"%@/%@%@", @"/topics", __PUSH_ENV, topic];
     
     NSString *authValueHeader = [NSString stringWithFormat:@"key=%@", SERVER_KEY];
     

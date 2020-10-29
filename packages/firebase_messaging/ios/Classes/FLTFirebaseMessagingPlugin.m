@@ -494,20 +494,21 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     /*NSLog(@"createAt es: %@", createAt);*/
     
     [chatService saveMessageWithTextMessage:messageText andChannelId:channelId andCreateAt:createAt andCompletionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+        NSHTTPURLResponse *httpResponseMain = (NSHTTPURLResponse *)response;
         /*NSLog(@"492 chatService:saveMessage() httpResponse.statusCode es:  %ld", httpResponse.statusCode);*/
         
-        if(httpResponse.statusCode == 401) {
+        if(httpResponseMain.statusCode == 401) {
             NSLog(@"*****************************************************************");
-            NSLog(@"ChatworkService onFailure() %ld", (long)httpResponse.statusCode);
+            NSLog(@"502 ChatworkServiceMain onFailure() %ld", (long)httpResponseMain.statusCode);
             NSLog(@"*****************************************************************");
             
             TokenService *tokenService = [[TokenService alloc] init];
             NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
             NSString *refreshToken = [prefs stringForKey:@"flutter.refreshToken"];
+            NSLog(@"refreshToken es: %@", refreshToken);
+
             [tokenService refreshTokenWithRefreshedToken:refreshToken andCompletionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
                 NSHTTPURLResponse *httpResponseToken = (NSHTTPURLResponse *)response;
-                /*NSLog(@"492 TokenService:saveMessage() httpResponseToken.statusCode es:  %ld", httpResponseToken.statusCode);*/
                 
                 if(httpResponseToken.statusCode == 414) {
                     NSLog(@"*****************************************************************");
@@ -517,9 +518,9 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
                     NSLog(@"Tu sesión ha sido cerrada. Por favor abre la app amazingwork.");
                 }
                 
-                if(httpResponseToken.statusCode == 201) {
+                if(httpResponseToken.statusCode == 200) {
                     NSLog(@"*****************************************************************");
-                    NSLog(@"TokenService onSuccess() %ld", (long)httpResponse.statusCode);
+                    NSLog(@"TokenService onSuccess() %ld", (long)httpResponseToken.statusCode);
                     NSLog(@"*****************************************************************");
                     
                     NSError *parseErrorTk = nil;
@@ -537,7 +538,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
                         
                         if(httpResponse.statusCode == 401) {
                             NSLog(@"*****************************************************************");
-                            NSLog(@"TokenService onFailure() %ld", (long)httpResponseToken.statusCode);
+                            NSLog(@"ChatworkServiceNested onFailure() %ld", (long)httpResponse.statusCode);
                             NSLog(@"*****************************************************************");
                             
                             NSLog(@"Tu sesión ha sido cerrada. Por favor abre la app amazingwork.");
@@ -546,7 +547,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
                         
                         if(httpResponse.statusCode == 201) {
                             NSLog(@"*****************************************************************");
-                            NSLog(@"ChatworkService onSuccess() %ld", (long)httpResponse.statusCode);
+                            NSLog(@"ChatworkServiceNested onSuccess() %ld", (long)httpResponse.statusCode);
                             NSLog(@"*****************************************************************");
 
                             NSError *parseError = nil;
@@ -602,19 +603,25 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
                             [self sendNotificationWithTitle:title body:messageText userId:userId channelId:channelId color:color userImage:userImage action:@"envio_chat" fromId:fromId codPedido:[NSString stringWithFormat:@"Pedido %@", [datosPedido objectForKey:@"idPediProveedor"]] description:[datosPedido objectForKey:@"descriPedido"] estadoPedido:estadoPedido valorPedido:valorPedido dataChat:[self getDataChatWithChannelId:channelId messageText:messageText topicSenderId:idUser senderId:fromId tipoUser:tipoUser pedido:datosPedido logoProveedor:logoProveedor foto:userImage currentPage:currentPage usuario:datosUsuario messageId:&messageId createAt:createAt] completionHandler:completionHandler];
                             
                         } else {
+                            NSLog(@"*****************************************************************");
+                            NSLog(@"ChatworkServiceNested onFailure() %ld", (long)httpResponse.statusCode);
+                            NSLog(@"*****************************************************************");
                             NSLog(@"Error es: %@", error);
                         }
                     }];
                     
                 } else {
+                    NSLog(@"*****************************************************************");
+                    NSLog(@"TokenService onFailure() %ld", (long)httpResponseToken.statusCode);
+                    NSLog(@"*****************************************************************");
                     NSLog(@"Error es: %@", error);
                 }
             }];
         }
         
-        if(httpResponse.statusCode == 201) {
+        if(httpResponseMain.statusCode == 201) {
             NSLog(@"*****************************************************************");
-            NSLog(@"ChatworkService onSuccess() %ld", (long)httpResponse.statusCode);
+            NSLog(@"624 ChatworkServiceMain onSuccess() %ld", (long)httpResponseMain.statusCode);
             NSLog(@"*****************************************************************");
 
             NSError *parseError = nil;
@@ -670,6 +677,9 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
             [self sendNotificationWithTitle:title body:messageText userId:userId channelId:channelId color:color userImage:userImage action:@"envio_chat" fromId:fromId codPedido:[NSString stringWithFormat:@"Pedido %@", [datosPedido objectForKey:@"idPediProveedor"]] description:[datosPedido objectForKey:@"descriPedido"] estadoPedido:estadoPedido valorPedido:valorPedido dataChat:[self getDataChatWithChannelId:channelId messageText:messageText topicSenderId:idUser senderId:fromId tipoUser:tipoUser pedido:datosPedido logoProveedor:logoProveedor foto:userImage currentPage:currentPage usuario:datosUsuario messageId:&messageId createAt:createAt] completionHandler:completionHandler];
             
         } else {
+            NSLog(@"*****************************************************************");
+            NSLog(@"681 ChatworkServiceMain onFailure() %ld", (long)httpResponseMain.statusCode);
+            NSLog(@"*****************************************************************");
             NSLog(@"Error es: %@", error);
         }
     }];
