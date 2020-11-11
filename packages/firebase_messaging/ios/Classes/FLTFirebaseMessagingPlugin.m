@@ -479,6 +479,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     NSLog(@"Returning message data notification....");
 
     NSLog(@"481 remoteMessage.appData for remote notifications: %@", remoteMessage.appData);
+    NSLog(@"482 remoteMessage.appData[kGCMMessageSilentKey] es: %@", remoteMessage.appData[kGCMMessageSilentKey]);
 
     // Check to key to ensure we only handle messages from Firebase
     if (remoteMessage.appData[kGCMMessageSilentKey])
