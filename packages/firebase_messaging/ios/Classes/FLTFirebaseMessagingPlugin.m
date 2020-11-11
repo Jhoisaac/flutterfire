@@ -487,6 +487,7 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     if ([silent boolValue]) {
       [_channel invokeMethod:@"onMessage" arguments:remoteMessage.appData];
     }
+  }
 // [END ios_10_data_message]
 
 - (void) handleReplyActionWithResponse:(UNTextInputNotificationResponse *)response withCompletionHandler:(void (^)(void))completionHandler API_AVAILABLE(ios(10.0)){
