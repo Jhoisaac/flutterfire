@@ -476,6 +476,9 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     NSLog(@"440 - (void)messaging:didReceiveMessage:(FIRMessagingRemoteMessage *)remoteMessage");
     NSLog(@"enlace FCM Se sobreescribe si se declara method iOS native");
     NSLog(@"Returning message data notification....");
+
+    NSLog(@"480 - (void)messaging:didReceiveMessage:(FIRMessagingRemoteMessage *)remoteMessage");
+    NSLog(@"481 Unable to register for remote notifications: %@", remoteMessage.appData);
 //  [_channel invokeMethod:@"onMessage" arguments:remoteMessage.appData];
 }
 // [END ios_10_data_message]
