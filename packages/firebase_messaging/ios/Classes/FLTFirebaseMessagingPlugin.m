@@ -15,6 +15,7 @@
 #import "Constants.h"
 
 NSString *const kGCMMessageIDKey = @"gcm.message_id";
+NSString *const kGCMMessageSilentKey = @"silent";
 
 #if defined(__IPHONE_10_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_10_0
 @interface FLTFirebaseMessagingPlugin () <FIRMessagingDelegate, UNUserNotificationCenterDelegate>
@@ -476,8 +477,17 @@ NSString *const COLOR_CONSUMIDOR = @"0x0288D1";
     NSLog(@"440 - (void)messaging:didReceiveMessage:(FIRMessagingRemoteMessage *)remoteMessage");
     NSLog(@"enlace FCM Se sobreescribe si se declara method iOS native");
     NSLog(@"Returning message data notification....");
-//  [_channel invokeMethod:@"onMessage" arguments:remoteMessage.appData];
-}
+
+    NSLog(@"481 remoteMessage.appData for remote notifications: %@", remoteMessage.appData);
+    NSLog(@"482 remoteMessage.appData[kGCMMessageSilentKey] es: %@", remoteMessage.appData[kGCMMessageSilentKey]);
+
+    // Check to key to ensure we only handle messages from Firebase
+    NSNumber *silent = remoteMessage.appData[kGCMMessageSilentKey];
+
+    if ([silent boolValue]) {
+      [_channel invokeMethod:@"onMessage" arguments:remoteMessage.appData];
+    }
+  }
 // [END ios_10_data_message]
 
 - (void) handleReplyActionWithResponse:(UNTextInputNotificationResponse *)response withCompletionHandler:(void (^)(void))completionHandler API_AVAILABLE(ios(10.0)){
